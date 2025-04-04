@@ -18,11 +18,9 @@ MC_sample_expanded = namedtuple(
 
 class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
     def __init__(
-        self, orbital_enabled=False, want_bottom_eigenfunctions=False, *args, **kwargs
+        self, orbital_enabled=False, *args, **kwargs
     ):
         self.orbital_enabled = orbital_enabled
-        self.want_bottom_eigenfunctions = want_bottom_eigenfunctions
-        # if we want bottom eigenfunctions, then we negate the sign of the operator
         super().__init__(*args, **kwargs)
 
     @override
@@ -154,7 +152,7 @@ class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
 
             # computing loss via straight inner product
             inner_prod = jnp.dot(start_representation, end_representation)
-            loss = -2 * inner_prod * (-1 if self.want_bottom_eigenfunctions else 1)
+            loss = -2 * inner_prod
         else:
             print("batched approximation error loss")
             # shapes (1024, 11) and (1024, 11)
@@ -175,7 +173,6 @@ class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
             loss = -2 * jnp.sum(
                 averaged_inner_prod
                 * coeff_mask
-                * (-1 if self.want_bottom_eigenfunctions else 1)
             )
 
         # Normalize loss
@@ -239,7 +236,6 @@ class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
                         coeff_matrix_mask
                         * product_1
                         * product_2
-                        * (-1 if self.want_bottom_eigenfunctions else 1)
                     )
                 else:
                     print("batched orthogonality loss")
@@ -255,7 +251,6 @@ class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
                         coeff_matrix_mask
                         * averaged_product_1
                         * averaged_product_2
-                        * (-1 if self.want_bottom_eigenfunctions else 1)
                     )
             except:
                 print(f"Shape of representation_1: {representation_1.shape}")
