@@ -208,7 +208,8 @@ class LaplacianEncoderTrainer(Trainer, ABC):    # TODO: Handle device
                 self._print_train_info()
                 if self.use_wandb:   # TODO: Use an alternative to wandb if False
                     # Log metrics
-                    self.logger.log(metrics_dict)
+                    if self.logger is not None:
+                        self.logger.log(metrics_dict)
 
             is_last_step = (step + 1) == self.total_train_steps
             is_plot_step = (
@@ -393,7 +394,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):    # TODO: Handle device
 
         # Save eigenvectors and eigenvalues
         if eig_not_found and self.save_eig:
-            self.env.save_eigenpairs(path_eig)
+            self.env.unwrapped.save_eigenpairs(path_eig)
 
         # Log environment eigenvalues
         self.env.unwrapped.round_eigenvalues(self.eigval_precision_order)
@@ -404,6 +405,11 @@ class LaplacianEncoderTrainer(Trainer, ABC):    # TODO: Handle device
         # Create eigenvector dictionary
         real_eigval = eigenvalues[:self.d]
         real_eigvec = self.env.unwrapped.get_eigenvectors()[:,:self.d]
+        
+        # print out the real eigenvalues and eigenvectors
+        print(f'All eigenvalues: {eigenvalues}')
+        print(f'Real eigenvalues: {real_eigval}')
+        # print(f'Real eigenvectors: {real_eigvec}')
 
         assert not np.isnan(real_eigvec).any(), \
             f'NaN values in the real eigenvectors: {real_eigvec}'
@@ -994,7 +1000,8 @@ class LaplacianEncoderTrainer(Trainer, ABC):    # TODO: Handle device
         plt.colorbar(mesh, ax=ax, shrink=0.5, pad=0.05)
 
         # Save figure
-        fig_path = f'./results/visuals/{self.env_name}/learned_eigenvector_{eigenvector_id}_{self.logger.id}.pdf'
+        logger_id = self.logger.id if self.logger is not None else 'no_wandb'
+        fig_path = f'./results/visuals/{self.env_name}/learned_eigenvector_{eigenvector_id}_{logger_id}.pdf'
 
         if not os.path.exists(os.path.dirname(fig_path)):
             os.makedirs(os.path.dirname(fig_path))

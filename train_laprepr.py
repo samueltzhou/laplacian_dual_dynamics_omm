@@ -16,6 +16,8 @@ from src.trainer import (
     AugmentedLagrangianTrainer,
     SQPTrainer,
     CQPTrainer,
+    LoRATrainer,
+    OMMTrainer,
 )
 from src.agent.episodic_replay_buffer import EpisodicReplayBuffer
 
@@ -40,6 +42,8 @@ def main(hyperparams):
     # Set random seed
     np.random.seed(hparam_yaml['seed'])
     random.seed(hparam_yaml['seed'])
+    
+    print(f'Available devices: {jax.devices()}')
 
     # Initialize timer
     timer = timer_tools.Timer()
@@ -107,6 +111,10 @@ def main(hyperparams):
         Trainer = SQPTrainer
     elif algorithm == 'cqp':
         Trainer = CQPTrainer
+    elif algorithm == 'lora':
+        Trainer = LoRATrainer
+    elif algorithm == 'omm':
+        Trainer = OMMTrainer
     else:
         raise ValueError(f'Algorithm {algorithm} is not supported.')
 

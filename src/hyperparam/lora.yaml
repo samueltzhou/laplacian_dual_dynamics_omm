@@ -1,5 +1,5 @@
 d: 11
-n_samples: 100000
+n_samples: 500000
 batch_size: 1024
 discount: 0.9
 log_dir: '/tmp/rl_laprepr/log'
@@ -27,7 +27,6 @@ save_model_every: 100000
 do_plot_eigenvectors: False
 obs_mode: xy
 window_size: 128
-algorithm: ggdo
+algorithm: lora
 asymmetric_normalization: False
 coefficient_normalization: True
-barrier_initial_val: 1.0

@@ -163,6 +163,10 @@ class EpisodicReplayBuffer:
 
         # Get visitation counts
         visitation_counts = self.get_visitation_counts()
+        
+        # print states and visitation counts
+        print(f"States:\n{states}")
+        print(f"Visitation counts:\n{visitation_counts}")
 
         # Obtain x, y, z coordinates, where z is the visitation count
         y = states[:,0]
@@ -219,10 +223,15 @@ class EpisodicReplayBuffer:
             dpi=300, 
             transparent=True, 
         )
-
+        
+        print(f'Visitation counts: {z}')
         freq_visitation = z / np.sum(z)
         entropy = -np.sum(freq_visitation * np.log(freq_visitation+1e-8))
         max_entropy = -np.log(1/len(freq_visitation))
         return vmin, vmax, entropy, max_entropy, freq_visitation
         
+    def debug_print_agent_states(self):
+        for episode in self._episodes:
+            for step in episode:
+                print(f"Raw agent state: {step.step.agent_state['xy_agent']}")
 
