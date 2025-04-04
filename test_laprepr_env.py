@@ -27,8 +27,8 @@ from src.nets import (
 )
 import wandb
 
-os.environ['WANDB_API_KEY']='83c25550226f8a86fdd4874026d2c0804cd3dc05'
-os.environ['WANDB_ENTITY']='tarod13'
+os.environ['WANDB_API_KEY']='5bafe94a7c3be779b0cdb6ea86a28283984fe95a'
+os.environ['WANDB_ENTITY']='samtzhou'
 # os.environ['WANDB_MODE']='offline'
 
 def create_env(
