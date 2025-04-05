@@ -32,7 +32,7 @@ class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
         state2, future_state2 = self.replay_buffer.sample_pairs(
             batch_size=self.batch_size,
             discount=self.discount,
-        )
+        )  # orbital
         uncorrelated_state_1 = self.replay_buffer.sample_steps(self.batch_size)
         uncorrelated_state_2 = self.replay_buffer.sample_steps(self.batch_size)
         (
@@ -102,6 +102,7 @@ class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
         constraint_representation_2 = self.permute_representations(
             constraint_representation_2
         )
+        # for orbital
         start_representation_2 = self.permute_representations(start_representation_2)
         end_representation_2 = self.permute_representations(end_representation_2)
 
@@ -110,8 +111,8 @@ class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
             end_representation,
             constraint_representation_1,
             constraint_representation_2,
-            start_representation_2,
-            end_representation_2,
+            start_representation_2,  # for orbitak
+            end_representation_2, # for orbital
         )
 
     def compute_approximation_error_loss(
@@ -348,6 +349,14 @@ class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
 
         return loss, aux
 
+    # note: the rest are from generalized_gdo.py
+    # no difference between non-permuted and permuted loss functions; TODO: check this
+    def loss_function_non_permuted(self, *args, **kwargs):
+        return self.loss_function(*args, **kwargs)
+
+    def loss_function_permuted(self, *args, **kwargs):
+        return self.loss_function(*args, **kwargs)
+
     def update_training_state(self, params, *args, **kwargs):
         """Leave params unchanged"""
 
@@ -361,9 +370,3 @@ class LowRankObjectiveTrainer(LaplacianEncoderTrainer):
     def init_additional_params(self, *args, **kwargs):
         additional_params = {}
         return additional_params
-
-    def loss_function_non_permuted(self, *args, **kwargs):
-        return self.loss_function(*args, **kwargs)
-
-    def loss_function_permuted(self, *args, **kwargs):
-        return self.loss_function(*args, **kwargs)
