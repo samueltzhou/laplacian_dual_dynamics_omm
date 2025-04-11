@@ -59,6 +59,8 @@ class MLP(hk.Module):
             name: str = 'MLP',
         ) -> None:
         super().__init__(name=name)
+        print(f"MLP with the following parameters: hidden dims {hidden_dims}, activation {activation}, output dim {output_dim}")
+        
         self.sequential = hk.Sequential(
             generate_fc_layers(output_dim, hidden_dims, activation))
 

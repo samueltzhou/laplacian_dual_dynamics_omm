@@ -1,6 +1,7 @@
 # from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 import gymnasium as gym
 import src.env
@@ -62,7 +63,7 @@ if __name__ == "__main__":
         obs_wrapper = lambda e: NormObs(e, reduction_factor=1)
         env = obs_wrapper(env)
 
-    print(env.grid.shape)
+    print(env.unwrapped.grid.shape)
     observation, info = env.reset()
 
     for i in range(10):
@@ -91,7 +92,13 @@ if __name__ == "__main__":
             for ax in axes:
                 ax.axis('off')
             plt.tight_layout()
-            plt.savefig(f'./results/visuals/{env_name}/{obs_mode}_obs{"_wrapper" if use_wrapper else ""}.png', dpi=300)
+
+            # Create directory if it doesn't exist
+            save_path = f'./results/visuals/{env_name}/'
+            os.makedirs(save_path, exist_ok=True)
+
+            # Save the figure
+            plt.savefig(f'{save_path}{obs_mode}_obs{"_wrapper" if use_wrapper else ""}.png', dpi=300)
             
         if terminated or truncated:
             observation, info = env.reset()

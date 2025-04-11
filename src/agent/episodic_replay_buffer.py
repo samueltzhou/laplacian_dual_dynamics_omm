@@ -154,7 +154,7 @@ class EpisodicReplayBuffer:
                 visitation_counts[(y,x)] += 1
         return visitation_counts
     
-    def plot_visitation_counts(self, states, env_name, grid):
+    def plot_visitation_counts(self, states, env_name, grid, curr_time=None):
         """Plot the visitation counts of each state."""
 
         import os
@@ -212,7 +212,10 @@ class EpisodicReplayBuffer:
         plt.colorbar(mesh, ax=ax, shrink=0.5, pad=0.05)
 
         # Save figure
-        fig_path = f'./results/visuals/{env_name}/visitation_counts.pdf'
+        if curr_time is not None:
+            fig_path = f'./results/visuals/{env_name}/{curr_time}/plots/visitation_counts.pdf'
+        else:
+            fig_path = f'./results/visuals/{env_name}/visitation_counts.pdf'
 
         if not os.path.exists(os.path.dirname(fig_path)):
             os.makedirs(os.path.dirname(fig_path))

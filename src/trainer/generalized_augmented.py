@@ -274,7 +274,7 @@ class GeneralizedAugmentedLagrangianTrainer(LaplacianEncoderTrainer, ABC):
         '''
         error_matrix = params['errors']
         dual_variables = params['duals']
-        updates = jnp.tril(error_matrix)
+        updates = jnp.tril(error_matrix) # index i only messes with 1 --> i - 1 cuz of stop grad
         dual_velocities = params['dual_velocities']
 
         # Calculate updated duals

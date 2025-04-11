@@ -24,8 +24,8 @@ class NormObs(ObservationWrapper):
             obs_dict["pixels"] = spaces.Box(
                 low=0, high=255, 
                 shape=(
-                    self.window_size, 
-                    self.window_size, 
+                    self.unwrapped.window_size, 
+                    self.unwrapped.window_size, 
                     3), 
                 dtype=jax.numpy.uint8)
             
