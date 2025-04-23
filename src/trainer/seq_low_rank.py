@@ -142,9 +142,9 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             print("one dimensional approximation error loss")
 
             # computing loss via squares
-            squared_diff = (start_representation - end_representation) ** 2
-            joint_squared_diff = squared_diff
-            loss = -(jnp.sum(joint_squared_diff))
+            # squared_diff = (start_representation - end_representation) ** 2
+            # joint_squared_diff = squared_diff
+            # loss = -(jnp.sum(joint_squared_diff))
 
             # computing loss via straight inner product
             inner_prod = jnp.dot(start_representation, end_representation)
@@ -214,15 +214,17 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
                     loss += jnp.sum(product_1 * product_2)
                 else:
                     print("batched orthogonality loss")
-                    product_1 = jnp.einsum(
-                        "bj, bk -> bjk", representation_2, representation_2_end
+                    product_1 = (
+                        jnp.einsum(
+                            "bj, bk -> jk", representation_2, representation_2_end
+                        )
+                        / representation_2.shape[0]
                     )
-                    averaged_product_1 = jnp.mean(product_1, axis=0)
-                    product_2 = jnp.einsum(
-                        "bj, bk -> bjk", representation_1, representation_1
+                    product_2 = (
+                        jnp.einsum("bj, bk -> jk", representation_1, representation_1)
+                        / representation_1.shape[0]
                     )
-                    averaged_product_2 = jnp.mean(product_2, axis=0)
-                    loss += jnp.sum(averaged_product_1 * averaged_product_2)
+                    loss += jnp.sum(product_1 * product_2)
             except:
                 print(f"Shape of representation_1: {representation_1.shape}")
                 print(f"Shape of representation_2: {representation_2.shape}")
@@ -240,11 +242,11 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
                     loss += jnp.sum(pairwise_product**2)
                 else:
                     print("batched orthogonality loss")
-                    pairwise_product_tensor = jnp.einsum(
-                        "ij, ik -> ijk", representation_1, representation_1
+                    pairwise_product_tensor = (
+                        jnp.einsum("ij, ik -> jk", representation_1, representation_1)
+                        / representation_1.shape[0]
                     )
-                    averaged_over_batch = jnp.mean(pairwise_product_tensor, axis=0)
-                    loss += jnp.sum(averaged_over_batch**2)
+                    loss += jnp.sum(pairwise_product_tensor**2)
             except:
                 print(f"Shape of representation_1: {representation_1.shape}")
                 raise

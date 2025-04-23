@@ -3,11 +3,11 @@ n_samples: 1000000 # normally 200000
 batch_size: 1024
 discount: 0.9
 log_dir: '/tmp/rl_laprepr/log'
-total_train_steps: 40000 # normally 20000
+total_train_steps: 80000 # normally 20000
 print_freq: 200
 max_episode_steps: 50
 seed: 1234
-env_name: GridMaze-17
+env_name: GridRoom-64
 env_family: Grid-v0
 lr: 0.001
 use_wandb: True

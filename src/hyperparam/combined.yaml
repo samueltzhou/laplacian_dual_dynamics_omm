@@ -3,16 +3,16 @@ n_samples: 1000000 # normally 200000 (1 million in big experiment)
 batch_size: 1024
 discount: 0.9
 log_dir: '/tmp/rl_laprepr/log'
-total_train_steps: 80000 # normally 20000 (40000 in big experiment)
+total_train_steps: 40000 # normally 20000 (40000 in big experiment)
 print_freq: 200
 save_freq: 10000
 max_episode_steps: 50
 seed: 1234
-env_name: GridRoom-4
+env_name: GridRoom-16
 env_family: Grid-v0
 lr: 0.001
-use_lr_schedule: False # new parameter that I added to try and help training stability
-final_lr_multiplier: 0.05 # at the end of lr exponential decay, the lr is final_lr_multiplier * lr
+use_lr_schedule: True # new parameter that I added to try and help training stability
+final_lr_multiplier: 0.01 # at the end of lr exponential decay, the lr is final_lr_multiplier * lr
 use_wandb: True
 hidden_dims:
   - 256
@@ -29,6 +29,6 @@ save_model_every: 100000
 do_plot_eigenvectors: True
 obs_mode: xy
 window_size: 128
-algorithm: seq_omm
+algorithm: combined
 asymmetric_normalization: False
 coefficient_normalization: True

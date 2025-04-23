@@ -17,9 +17,7 @@ MC_sample_expanded = namedtuple(
 
 
 class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
-    def __init__(
-        self, orbital_enabled=False, *args, **kwargs
-    ):
+    def __init__(self, orbital_enabled=False, *args, **kwargs):
         self.orbital_enabled = orbital_enabled
         super().__init__(*args, **kwargs)
 
@@ -112,7 +110,7 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             constraint_representation_1,
             constraint_representation_2,
             start_representation_2,  # for orbitak
-            end_representation_2, # for orbital
+            end_representation_2,  # for orbital
         )
 
     def compute_approximation_error_loss(
@@ -142,7 +140,7 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
         # loss = -2 * ((start_representation - end_representation)**2).mean() # need to recheck this...
         loss = 0
         coeff_mask = jnp.arange(self.d, 0, -1)  # for joint LoRA
-        coeff_mask = coeff_mask ** 2 # this is just a test, comment this out later
+        coeff_mask = coeff_mask**2  # this is just a test, comment this out later
         if len(start_representation.shape) == 1 and len(end_representation.shape) == 1:
             print("one dimensional approximation error loss")
 
@@ -171,10 +169,7 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
                 jnp.einsum("bi, bi -> i", start_representation, end_representation)
                 / start_representation.shape[0]
             )
-            loss = -2 * jnp.sum(
-                averaged_inner_prod
-                * coeff_mask
-            )
+            loss = -2 * jnp.sum(averaged_inner_prod * coeff_mask)
 
         # Normalize loss
         # if self.coefficient_normalization:
@@ -203,7 +198,11 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
         """
         loss = 0
 
-        print("we are using joint OMM" if self.orbital_enabled else "we are using joint LoRA")
+        print(
+            "we are using joint OMM"
+            if self.orbital_enabled
+            else "we are using joint LoRA"
+        )
         print(f"for orthogonality loss: representation_1: {representation_1.shape}")
         print(f"for orthogonality loss: representation_2: {representation_2.shape}")
         print(
@@ -215,7 +214,9 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
 
         # Create the mask in a vectorized way
         coeff_vector_mask = jnp.arange(self.d, 0, -1)
-        coeff_vector_mask = coeff_vector_mask ** 2 # this is just a test, comment this out later
+        coeff_vector_mask = (
+            coeff_vector_mask**2
+        )  # this is just a test, comment this out later
         coeff_vector_mask_col = jnp.expand_dims(coeff_vector_mask, 1)  # Shape: (d, 1)
         coeff_vector_mask_row = jnp.expand_dims(coeff_vector_mask, 0)  # Shape: (1, d)
         coeff_matrix_mask = jnp.minimum(
@@ -233,11 +234,7 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
                     product_2 = jnp.einsum(
                         "j, k -> jk", representation_1, representation_1
                     )
-                    loss += jnp.sum(
-                        coeff_matrix_mask
-                        * product_1
-                        * product_2
-                    )
+                    loss += jnp.sum(coeff_matrix_mask * product_1 * product_2)
                 else:
                     print("batched orthogonality loss")
                     product_1 = jnp.einsum(
@@ -249,9 +246,7 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
                     )
                     averaged_product_2 = jnp.mean(product_2, axis=0)
                     loss += jnp.sum(
-                        coeff_matrix_mask
-                        * averaged_product_1
-                        * averaged_product_2
+                        coeff_matrix_mask * averaged_product_1 * averaged_product_2
                     )
             except:
                 print(f"Shape of representation_1: {representation_1.shape}")

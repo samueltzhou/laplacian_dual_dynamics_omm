@@ -20,6 +20,9 @@ from src.trainer import (
     JointOMMTrainer,
     SequentialLoRATrainer,
     SequentialOMMTrainer,
+    EfficientSequentialLoRATrainer,
+    EfficientSequentialOMMTrainer,
+    CombinedLoRATrainer,
 )
 from src.agent.episodic_replay_buffer import EpisodicReplayBuffer
 
@@ -90,34 +93,56 @@ def main(hyperparams):
     final_multiplier = hparam_yaml.get("final_lr_multiplier", 0.01)
 
     if use_lr_schedule:
-        warmup_steps = total_train_steps // 10  # 10% warmup
-        decay_steps = total_train_steps - warmup_steps
-        
-        print(f"Using cosine learning rate schedule with warmup: warmup_steps {warmup_steps}, "
-              f"lr_init {lr_init}, total_train_steps {total_train_steps}")
+        # warmup_steps = total_train_steps // 10  # 10% warmup
+        # decay_steps = total_train_steps - warmup_steps
 
-        # Create schedule with linear warmup and cosine decay
-        schedule_fn = optax.join_schedules(
-            schedules=[
-                # Linear warmup from 0 to lr_init
-                optax.linear_schedule(
-                    init_value=0.0,
-                    end_value=lr_init,
-                    transition_steps=warmup_steps
-                ),
-                # Cosine decay from lr_init to 0
-                optax.cosine_decay_schedule(
-                    init_value=lr_init,
-                    decay_steps=decay_steps,
-                    alpha=0.0  # final value will be 0 (alpha=0)
-                )
-            ],
-            boundaries=[warmup_steps]  # Point at which to switch schedules
+        # print(
+        #     f"Using cosine learning rate schedule with warmup: warmup_steps {warmup_steps}, "
+        #     f"lr_init {lr_init}, total_train_steps {total_train_steps}"
+        # )
+
+        # # Create schedule with linear warmup and cosine decay
+        # schedule_fn = optax.join_schedules(
+        #     schedules=[
+        #         # Linear warmup from 0 to lr_init
+        #         optax.linear_schedule(
+        #             init_value=0.0, end_value=lr_init, transition_steps=warmup_steps
+        #         ),
+        #         # Cosine decay from lr_init to 0
+        #         optax.cosine_decay_schedule(
+        #             init_value=lr_init,
+        #             decay_steps=decay_steps,
+        #             alpha=0.0,  # final value will be 0 (alpha=0)
+        #         ),
+        #     ],
+        #     boundaries=[warmup_steps],  # Point at which to switch schedules
+        # )
+
+        # ======= EXPONENTIAL DECAY SCHEDULE =======
+        # Create continuous exponential decay schedule
+        # Going from lr_init to final_multiplier*lr_init
+        # Calculate decay rate based on requirements:
+        # decay_rate^(total_steps) = final_multiplier
+        # So decay_rate = final_multiplier^(1/total_steps)
+        decay_rate = np.exp(np.log(final_multiplier) / total_train_steps)
+
+        print(
+            f"Using a continuous exponential decay learning rate schedule with decay rate {decay_rate}, lr_init {lr_init}, final_multiplier {final_multiplier}, total_train_steps {total_train_steps}"
+        )
+
+        # Create the schedule
+        schedule_fn = optax.exponential_decay(
+            init_value=lr_init,
+            transition_steps=1,  # Decay every step
+            decay_rate=decay_rate,
+            end_value=final_multiplier * lr_init,  # Lower bound on learning rate
+            staircase=False,  # Continuous decay
         )
 
         optimizer = optax.adam(schedule_fn)
     else:
         # Use constant learning rate
+        print(f"Using a constant learning rate of {lr_init}")
         optimizer = optax.adam(lr_init)
 
     replay_buffer = EpisodicReplayBuffer(
@@ -155,8 +180,17 @@ def main(hyperparams):
         Trainer = JointOMMTrainer
     elif algorithm == "sequential_lora" or algorithm == "seq_lora":
         Trainer = SequentialLoRATrainer
+        # Trainer = EfficientSequentialLoRATrainer
     elif algorithm == "sequential_omm" or algorithm == "seq_omm":
         Trainer = SequentialOMMTrainer
+        # Trainer = EfficientSequentialOMMTrainer
+    elif (
+        algorithm == "combined_lora_omm"
+        or algorithm == "combined_lora"
+        or algorithm == "combined_omm"
+        or algorithm == "combined"
+    ):
+        Trainer = CombinedLoRATrainer
     else:
         raise ValueError(f"Algorithm {algorithm} is not supported.")
 
