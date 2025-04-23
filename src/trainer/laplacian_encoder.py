@@ -227,7 +227,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
 
                 steps_per_sec = timer.steps_per_sec(step)
                 print(
-                    f"Training steps per second: {steps_per_sec:.4g}. Current learning rate: {self.optimizer.get_current_lr(opt_state)}."
+                    f"Training steps per second: {steps_per_sec:.4g}."
                 )  # TODO: Use logging instead of print
 
                 self._print_train_info()

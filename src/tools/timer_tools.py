@@ -29,9 +29,9 @@ class Timer:
 
 
 def get_time_identifier():
-    '''
-        Generate an 8-digit hexadecimal identifier based on the current time.
-    '''
+    """
+    Generate an 8-digit hexadecimal identifier based on the current time.
+    """
     # Get the current time in seconds since the epoch
     current_time = int(time.time())
 

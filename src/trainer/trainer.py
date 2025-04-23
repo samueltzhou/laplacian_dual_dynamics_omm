@@ -2,16 +2,18 @@ from abc import ABC, abstractmethod
 import jax
 from src.agent.episodic_replay_buffer import EpisodicReplayBuffer
 
+
 # Define abstract Trainer class
 class Trainer(ABC):
-    def __init__(self, 
-            encoder_fn: callable,
-            optimizer: callable, 
-            replay_buffer: EpisodicReplayBuffer, 
-            logger, 
-            rng_key: jax.random.PRNGKey, 
-            **kwargs
-        ):
+    def __init__(
+        self,
+        encoder_fn: callable,
+        optimizer: callable,
+        replay_buffer: EpisodicReplayBuffer,
+        logger,
+        rng_key: jax.random.PRNGKey,
+        **kwargs
+    ):
         super().__init__()
 
         # Store model
@@ -27,7 +29,7 @@ class Trainer(ABC):
     @abstractmethod
     def loss_function_non_permuted(self, *args, **kwargs):
         raise NotImplementedError
-    
+
     @abstractmethod
     def init_additional_params(self, *args, **kwargs):
         raise NotImplementedError
@@ -39,11 +41,11 @@ class Trainer(ABC):
     @abstractmethod
     def train_step_non_permuted(self, *args, **kwargs):
         raise NotImplementedError
-    
+
     @abstractmethod
     def train(self, *args, **kwargs):
         raise NotImplementedError
-    
+
     @abstractmethod
     def additional_update_step(self, *args, **kwargs):
         raise NotImplementedError

@@ -12,6 +12,7 @@ import jax
 
 # import cv2
 
+
 def resize_pixels(original_image, reduction_factor=1):
     if reduction_factor == 1:
         return original_image
@@ -21,39 +22,43 @@ def resize_pixels(original_image, reduction_factor=1):
     new_height = original_height // reduction_factor
 
     # resized_image = cv2.resize(
-    #     original_image, 
-    #     (new_width, new_height), 
+    #     original_image,
+    #     (new_width, new_height),
     #     interpolation = cv2.INTER_AREA
     # )
     resized_image = jax.numpy.array(original_image)
-    resized_image = jax.image.resize(
-        resized_image, 
-        (new_width, new_height, n_channels), 
-        method=jax.image.ResizeMethod.LANCZOS3
-    ).astype(jax.numpy.float32) / 255
+    resized_image = (
+        jax.image.resize(
+            resized_image,
+            (new_width, new_height, n_channels),
+            method=jax.image.ResizeMethod.LANCZOS3,
+        ).astype(jax.numpy.float32)
+        / 255
+    )
 
     # JAX to numpy
     resized_image = np.array(resized_image)
 
     return resized_image
 
+
 if __name__ == "__main__":
     use_wrapper = True
     reduction_factor = 2
     # filter = Image.Resampling.BOX
-    env_name = 'GridRoom-64'
-    obs_mode = 'pixels'
-    path_txt_grid = f'./src/env/grid/txts/{env_name}.txt'
-    path_eig = f'./src/env/grid/eigval/{env_name}.npz'
+    env_name = "GridRoom-64"
+    obs_mode = "pixels"
+    path_txt_grid = f"./src/env/grid/txts/{env_name}.txt"
+    path_eig = f"./src/env/grid/eigval/{env_name}.npz"
 
     eig = load_eig(path_eig)[0]
     env = gym.make(
-        'Grid-v0', 
-        path=path_txt_grid, 
-        render_mode="human", 
-        render_fps=20, 
-        eig=eig, 
-        obs_mode=obs_mode, 
+        "Grid-v0",
+        path=path_txt_grid,
+        render_mode="human",
+        render_fps=20,
+        eig=eig,
+        obs_mode=obs_mode,
         calculate_eig=False,
         window_size=256,
         use_target=False,
@@ -67,14 +72,19 @@ if __name__ == "__main__":
     observation, info = env.reset()
 
     for i in range(10):
-        action = env.action_space.sample()  # agent policy that uses the observation and info
+        action = (
+            env.action_space.sample()
+        )  # agent policy that uses the observation and info
         observation, reward, terminated, truncated, info = env.step(action)
 
-
-        if (obs_mode in observation.keys()) and (obs_mode != 'xy') and (i == 0):
-            original_image = observation['pixels' if obs_mode in ['pixels', 'both'] else 'grid']
+        if (obs_mode in observation.keys()) and (obs_mode != "xy") and (i == 0):
+            original_image = observation[
+                "pixels" if obs_mode in ["pixels", "both"] else "grid"
+            ]
             original_image = np.array(original_image)
-            resized_image = resize_pixels(original_image, reduction_factor=reduction_factor)
+            resized_image = resize_pixels(
+                original_image, reduction_factor=reduction_factor
+            )
             # original_image = Image.fromarray(original_image)
 
             # original_width, original_height = original_image.size
@@ -86,21 +96,24 @@ if __name__ == "__main__":
 
             fig, axes = plt.subplots(1, 2, figsize=(10, 5))
             axes[0].imshow(original_image)
-            axes[0].set_title('Original Image')
+            axes[0].set_title("Original Image")
             axes[1].imshow(resized_image)
-            axes[1].set_title('Resized Image')
+            axes[1].set_title("Resized Image")
             for ax in axes:
-                ax.axis('off')
+                ax.axis("off")
             plt.tight_layout()
 
             # Create directory if it doesn't exist
-            save_path = f'./results/visuals/{env_name}/'
+            save_path = f"./results/visuals/{env_name}/"
             os.makedirs(save_path, exist_ok=True)
 
             # Save the figure
-            plt.savefig(f'{save_path}{obs_mode}_obs{"_wrapper" if use_wrapper else ""}.png', dpi=300)
-            
+            plt.savefig(
+                f'{save_path}{obs_mode}_obs{"_wrapper" if use_wrapper else ""}.png',
+                dpi=300,
+            )
+
         if terminated or truncated:
             observation, info = env.reset()
-            
+
     env.close()
