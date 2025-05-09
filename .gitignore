@@ -137,4 +137,4 @@ log/*
 src/data/*
 wandb
 # results
-src/env/grid/eigval
+# src/env/grid/eigval
