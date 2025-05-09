@@ -3,12 +3,12 @@ n_samples: 1000000 # normally 200000 (1 million in big experiment)
 batch_size: 1024
 discount: 0.9
 log_dir: '/tmp/rl_laprepr/log'
-total_train_steps: 80000 # normally 20000 (40000 in big experiment)
+total_train_steps: 80000 # normally 20000 (80000 in big experiment)
 print_freq: 200
 save_freq: 10000
 max_episode_steps: 50
 seed: 1234
-env_name: GridRoom-4
+env_name: GridRoom-1
 env_family: Grid-v0
 lr: 0.001
 use_lr_schedule: False # new parameter that I added to try and help training stability
@@ -31,4 +31,4 @@ obs_mode: xy
 window_size: 128
 algorithm: seq_omm
 asymmetric_normalization: False
-coefficient_normalization: True
+coefficient_normalization: False

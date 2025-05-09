@@ -18,6 +18,12 @@ from src.trainer.eff_seq_low_rank import (
 from src.trainer.lora_and_omm import (
     CombinedLowRankObjectiveTrainer as CombinedLoRATrainer,
 )
+from src.trainer.high_order_omm import (
+    HighOrderSequentialOMMLossTrainer as HighOrderSequentialOMMTrainer,
+)
+from src.trainer.mixed_order_seq_omm import (
+    MixedOrderSequentialOMMLossTrainer as MixedOrderSequentialOMMTrainer
+)
 from functools import partial
 
 # Create a specialized version of LowRankObjectiveTrainer with orbital_enabled=True for OMM

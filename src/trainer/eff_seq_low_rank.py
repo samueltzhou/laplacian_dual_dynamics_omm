@@ -16,14 +16,14 @@ class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
     def __init__(self, orbital_enabled=False, *args, **kwargs):
         self.orbital_enabled = orbital_enabled
         super().__init__(*args, **kwargs)
-        
+
         # tmp = self._generate_static_masks()
         # self.static_vector_mask = tmp[0]
         # self.static_matrix_mask = tmp[1]
         # self.static_upper_mask = tmp[2]
         # self.static_lower_mask = tmp[3]
         # self.static_diag_mask = tmp[4]
-        
+
     def _generate_static_masks(self) -> Tuple[jnp.ndarray]:
         """
         Generates cached vector mask, matrix mask, upper triangular mask, lower triangular mask, and diagonal mask
@@ -32,10 +32,9 @@ class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
         upper_mask = jnp.tril(jnp.ones((self.d, self.d)), k=-1)
         lower_mask = upper_mask.T
         diag_mask = jnp.eye(self.d)
-        
+
         return vector_mask, matrix_mask, upper_mask, lower_mask, diag_mask
-        
-        
+
     def _generate_masks(self, curr_d) -> Tuple[jnp.ndarray]:
         """
         Generates a monotonically decreasing mask in dimension index - both vector and matrix
@@ -58,10 +57,10 @@ class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
     def _compute_indexwise_products(self, f, g) -> jnp.ndarray:
         assert f.shape[0] == g.shape[0]
         return jnp.einsum("bi, bj -> ij", f, g) / f.shape[0]
-        
+
         # # use matmul instead of einsum for speed
         # return f.T @ g / f.shape[0]
-
+        
     def loss_function(self, params, train_batch, **kwargs) -> Tuple[jnp.ndarray]:
         """
         Computes the low rank loss (either LoRA or OMM) for the sequential formulation.
@@ -138,6 +137,11 @@ class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             / start_representation.shape[0]
         )
         joint_self_inner_products_matrix = jnp.diag(joint_self_inner_products)
+        
+        # optional off diagonal penalty term
+        off_diag_penalty_mat = jnp.einsum("bi, bj -> ij", start_representation, end_representation) / start_representation.shape[0]
+        off_diag_penalty = self.d / 2 * jnp.sum((off_diag_penalty_mat - jnp.diag(jnp.diag(off_diag_penalty_mat)))**2)
+        print(f"off_diag_penalty: {off_diag_penalty}")
 
         # common matrix computations for both LoRA and OMM
         # we're dropping start_representation_2 and end_representation_2, as the approximation that
@@ -180,7 +184,7 @@ class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
                 vector_mask * joint_self_inner_products
             )
             orthogonality_loss = jnp.sum(matrix_mask * cov_indexwise_products**2)
-        train_loss = approximation_error_loss + orthogonality_loss
+        train_loss = approximation_error_loss + orthogonality_loss + off_diag_penalty
 
         if self.coefficient_normalization:
             approximation_error_loss = approximation_error_loss / (

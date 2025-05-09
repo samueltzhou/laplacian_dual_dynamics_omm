@@ -1,2 +1,0 @@
-python train_laprepr.py gridroom_32_omm --config_file omm.yaml --use_wandb
-python train_laprepr.py [name of experiment] --config_file omm.yaml --use_wandb

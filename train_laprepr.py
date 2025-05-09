@@ -23,6 +23,8 @@ from src.trainer import (
     EfficientSequentialLoRATrainer,
     EfficientSequentialOMMTrainer,
     CombinedLoRATrainer,
+    HighOrderSequentialOMMTrainer,
+    MixedOrderSequentialOMMTrainer
 )
 from src.agent.episodic_replay_buffer import EpisodicReplayBuffer
 
@@ -191,6 +193,10 @@ def main(hyperparams):
         or algorithm == "combined"
     ):
         Trainer = CombinedLoRATrainer
+    elif algorithm == "high_order_seq_omm":
+        Trainer = HighOrderSequentialOMMTrainer
+    elif algorithm == "mixed_order_seq_omm":
+        Trainer = MixedOrderSequentialOMMTrainer
     else:
         raise ValueError(f"Algorithm {algorithm} is not supported.")
 

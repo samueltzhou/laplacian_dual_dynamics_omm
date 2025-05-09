@@ -1,8 +1,8 @@
 import os
+import json
 from typing import Tuple
 from abc import ABC, abstractmethod
 from collections import OrderedDict, namedtuple
-from datetime import datetime
 
 from src.trainer.trainer import Trainer
 
@@ -35,10 +35,23 @@ MC_sample = namedtuple(
 )
 
 
+class NumpyEncoder(json.JSONEncoder):
+    """ Custom encoder for numpy and JAX numpy data types """
+    def default(self, obj):
+        if isinstance(obj, (np.integer, jnp.integer)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, jnp.floating)):
+            return float(obj)
+        elif isinstance(obj, (np.ndarray, jnp.ndarray)):
+            return obj.tolist()
+        elif isinstance(obj, jax.Array): # Catch JAX arrays specifically
+            return obj.tolist()
+        return super(NumpyEncoder, self).default(obj)
+
+
 class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._date_time = datetime.now().strftime("%Y%m%d%H%M%S")
         self.reset_counters()
         self.build_environment()
         self.collect_experience()
@@ -53,6 +66,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         self.past_permutation_array = jnp.arange(self.d)
         self.permutation_array = jnp.arange(self.d)
         self.init_train_functions()
+        print(f"MEOW MEOW {self.exp_label}")
 
     def _get_obs_batch(
         self, steps
@@ -331,7 +345,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         )
         if should_save_best:
             save_path_best = (
-                f"./results/models/{self.env_name}/best_{self._date_time}.pkl"
+                f"./results/models/{self.env_name}/best_{self.exp_label}.pkl"
             )
 
             self._best_cosine_similarity = cosine_similarity
@@ -357,7 +371,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
                 self.logger.log_artifact(best_model)
 
         # Save the model every log step
-        save_path_last = f"./results/models/{self.env_name}/last_{self._date_time}.pkl"
+        save_path_last = f"./results/models/{self.env_name}/last_{self.exp_label}.pkl"
         saving.save_model(
             params=params,
             optim_state=optim_state,
@@ -430,7 +444,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         plt.grid(True, linestyle="--", alpha=0.7)
 
         # Ensure the directory exists
-        save_dir = f"./results/visuals/{self.env_name}/{self._date_time}/plots/"
+        save_dir = f"./results/visuals/{self.env_name}/{self.exp_label}/plots/"
         os.makedirs(save_dir, exist_ok=True)
 
         # Save the plot
@@ -439,6 +453,40 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         plt.close()
 
         print(f"Loss total plot saved to: {save_path}")
+        
+        json_save_path = f"./results/visuals/{self.env_name}/{self.exp_label}/training_history.json"
+        # Ensure the directory for JSON exists as well
+        os.makedirs(os.path.dirname(json_save_path), exist_ok=True)
+
+        # Convert JAX/Numpy arrays in history to lists or native Python types before saving
+        # This step might be redundant if NumpyEncoder handles everything, but can be a safeguard
+        history_to_save = {}
+        for key, value in self.history.items():
+            if isinstance(value, list):
+                history_to_save[key] = [
+                    float(v) if isinstance(v, (np.floating, jnp.floating)) else
+                    int(v) if isinstance(v, (np.integer, jnp.integer)) else
+                    v.tolist() if isinstance(v, (np.ndarray, jnp.ndarray, jax.Array)) else
+                    v
+                    for v in value
+                ]
+            elif isinstance(value, (np.floating, jnp.floating)):
+                history_to_save[key] = float(value)
+            elif isinstance(value, (np.integer, jnp.integer)):
+                history_to_save[key] = int(value)
+            elif isinstance(value, (np.ndarray, jnp.ndarray, jax.Array)):
+                 history_to_save[key] = value.tolist()
+            else:
+                history_to_save[key] = value
+        
+        # Add final values after potential conversion
+        if "cos_sim" in history_to_save and history_to_save["cos_sim"]:
+             history_to_save["final_cos_sim"] = history_to_save["cos_sim"][-1]
+        if "loss_total" in history_to_save and history_to_save["loss_total"]:
+             history_to_save["final_loss_total"] = history_to_save["loss_total"][-1]
+
+        with open(json_save_path, "w") as f:
+            json.dump(history_to_save, f, cls=NumpyEncoder, indent=4) # Added indent for readability
 
         # If using wandb, log the image
         if self.use_wandb and self.logger is not None:
@@ -476,7 +524,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         plt.grid(True, linestyle="--", alpha=0.7)
 
         # Ensure the directory exists
-        save_dir = f"./results/visuals/{self.env_name}/{self._date_time}/plots/"
+        save_dir = f"./results/visuals/{self.env_name}/{self.exp_label}/plots/"
         os.makedirs(save_dir, exist_ok=True)
 
         # Save the plot
@@ -1133,7 +1181,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
             ],  # TODO: Make this more general (not only for xy or both)
             self.env_name,
             self.env.unwrapped.get_grid().astype(bool),
-            curr_time=self._date_time,
+            self.exp_label,
         )
         time_cost = timer.time_cost()
         print(f"Visitation evaluated, time cost: {time_cost}s")
@@ -1171,7 +1219,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
 
         # get storage path id again
         logger_id = self.logger.id if self.logger is not None else "no_wandb"
-        fig_path = f"./results/visuals/{self.env_name}/{self._date_time}/eigenvectors/learned_eigenvector_{i}_{logger_id}.pdf"
+        fig_path = f"./results/visuals/{self.env_name}/{self.exp_label}/eigenvectors/learned_eigenvector_{i}_{logger_id}.pdf"
 
         print(f"Eigenvectors plotted, saved to {fig_path}")
 
@@ -1221,7 +1269,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
 
         # Save figure
         logger_id = self.logger.id if self.logger is not None else "no_wandb"
-        fig_path = f"./results/visuals/{self.env_name}/{self._date_time}/eigenvectors/learned_eigenvector_{eigenvector_id}_{logger_id}.pdf"
+        fig_path = f"./results/visuals/{self.env_name}/{self.exp_label}/eigenvectors/learned_eigenvector_{eigenvector_id}_{logger_id}.pdf"
 
         if not os.path.exists(os.path.dirname(fig_path)):
             os.makedirs(os.path.dirname(fig_path))
