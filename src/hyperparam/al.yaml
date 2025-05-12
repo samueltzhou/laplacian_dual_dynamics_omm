@@ -10,6 +10,7 @@ seed: 1234
 env_name: GridRoom-64
 env_family: Grid-v0
 lr: 0.001
+device: gpu
 use_wandb: True
 hidden_dims:
   - 256

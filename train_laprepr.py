@@ -39,7 +39,7 @@ import wandb
 def main(hyperparams):
     if hyperparams.wandb_offline:
         os.environ["WANDB_MODE"] = "offline"
-
+        
     # Load YAML hyperparameters
     with open(f"./src/hyperparam/{hyperparams.config_file}", "r") as f:
         hparam_yaml = yaml.safe_load(f)  # TODO: Check necessity of hyperparams
@@ -48,12 +48,61 @@ def main(hyperparams):
     for k, v in vars(hyperparams).items():
         if v is not None:
             hparam_yaml[k] = v
+            
+    print(f"hparam_yaml['device']: {hparam_yaml['device']}")
+
+    # --- JAX Device Configuration ---
+    print(f"Initial JAX default backend: {jax.default_backend()}")
+    print(f"Initial available JAX devices: {jax.devices()}")
+
+    requested_device_type = hparam_yaml["device"]
+    print(f"User requested device type: {requested_device_type}")
+
+    if requested_device_type == "cpu":
+        try:
+            jax.config.update('jax_platform_name', 'cpu')
+            print("JAX platform explicitly set to CPU.")
+        except Exception as e:
+            print(f"Warning: Could not set JAX platform to CPU: {e}")
+    elif requested_device_type == "gpu":
+        # Attempt to configure JAX for GPU. This is a directive.
+        # JAX will only use GPU if a GPU-enabled jaxlib is installed and hardware is detected.
+        try:
+            jax.config.update('jax_platform_name', 'gpu')
+            print("Attempted to set JAX platform to GPU.")
+        except Exception as e:
+            print(f"Note: Could not explicitly set JAX platform to GPU via jax.config.update (may already be set or other issue): {e}")
+
+    # Verify the outcome
+    print(f"JAX default backend after configuration attempt: {jax.default_backend()}")
+    final_devices = jax.devices()
+    print(f"Available JAX devices after configuration attempt: {final_devices}")
+
+    if requested_device_type == "gpu":
+        gpu_devices_check = jax.devices('gpu') # Check specifically for GPU devices
+        if not gpu_devices_check:
+            print("\nWarning: GPU requested, but no GPU devices are available to JAX.")
+            print("         This could be due to:")
+            print("           1. GPU-enabled jaxlib not installed (e.g., install via pip install -U \"jax[cuda12_pip]\" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html).")
+            print("           2. NVIDIA drivers or CUDA toolkit issues.")
+            print(f"         JAX is currently using: {jax.default_backend()} with devices: {final_devices}\n")
+        else:
+            print(f"JAX is configured to use GPU. Detected GPU devices: {gpu_devices_check}")
+            if jax.default_backend() != 'gpu':
+                print(f"Note: JAX default backend is {jax.default_backend()}, but GPU devices were found. JAX should prioritize GPUs if available.")
+    elif requested_device_type == "cpu":
+        cpu_devices_check = jax.devices('cpu')
+        if jax.default_backend() == 'cpu' and cpu_devices_check:
+            print(f"JAX is configured to use CPU. Detected CPU devices: {cpu_devices_check}")
+        else:
+            print(f"Warning: CPU was requested, but JAX backend is {jax.default_backend()} or no CPU devices found. Current devices: {final_devices}. Please check configuration.")
+    # --- End JAX Device Configuration ---
+
+
 
     # Set random seed
     np.random.seed(hparam_yaml["seed"])
     random.seed(hparam_yaml["seed"])
-
-    print(f"Available devices: {jax.devices()}")
 
     # Initialize timer
     timer = timer_tools.Timer()
@@ -318,6 +367,13 @@ if __name__ == "__main__":
         type=float,
         default=None,
         help="Learning rate of the barrier coefficient in the quadratic penalty.",
+    )
+
+    parser.add_argument(
+        "--device",
+        type=str,
+        choices=["cpu", "gpu"],
+        help="Device to use for JAX computations (e.g., 'cpu', 'gpu'). JAX will attempt to use the specified platform.",
     )
 
     hyperparams = parser.parse_args()
