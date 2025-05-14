@@ -32,3 +32,4 @@ window_size: 128
 algorithm: seq_omm
 asymmetric_normalization: False
 coefficient_normalization: False
+eigenvalue_shift_alpha: 0.0
