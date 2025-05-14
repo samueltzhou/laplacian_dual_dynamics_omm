@@ -9,6 +9,7 @@ import jax.numpy as jnp
 import equinox as eqx
 
 from src.trainer.laplacian_encoder import LaplacianEncoderTrainer
+from src.trainer.constants import FROBENIUS_NORM_ALPHA
 
 MC_sample_expanded = namedtuple(
     "MC_sample_expanded",
@@ -111,6 +112,19 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             start_representation_2,
             end_representation_2,
         )
+        
+    def _compute_frobenius_norm_loss(self, representation, alpha):
+        """
+        Compute the Frobenius norm loss between the representation and the identity matrix.
+
+        Args:
+            representation: The representation of the state. Shape (B, d)
+            alpha: The alpha parameter.
+
+        Returns:
+            The Frobenius norm loss.
+        """
+        return alpha * jnp.sum((representation.T @ representation / representation.shape[0] - jnp.eye(representation.shape[1]))**2)
 
     def compute_approximation_error_loss(
         self, start_representation, end_representation
@@ -336,9 +350,13 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
                     else None
                 ),
             )
-            loss = approximation_error_loss + orthogonality_loss
+            frobenius_norm_loss = self._compute_frobenius_norm_loss(
+                self._build_stop_grad_encoding(start_representation, top_i),
+                FROBENIUS_NORM_ALPHA,
+            )
+            loss = approximation_error_loss + orthogonality_loss + frobenius_norm_loss
 
-            return loss, approximation_error_loss, orthogonality_loss
+            return loss, approximation_error_loss, orthogonality_loss, frobenius_norm_loss
 
         print("Shapes of representations in batch: ")
         print(f"start_representation: {start_representation.shape}")
@@ -353,25 +371,28 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
         total_loss = 0
         total_approximation_error_loss = 0
         total_orthogonality_loss = 0
+        total_frobenius_norm_loss = 0
         for top_i in range(1, self.d + 1):
             curr_coef = self.d - top_i + 1
-            curr_loss, curr_approximation_error_loss, curr_orthogonality_loss = (
+            curr_loss, curr_approximation_error_loss, curr_orthogonality_loss, curr_frobenius_norm_loss = (
                 _compute_loss_function_component(top_i)
             )
             total_loss += curr_coef * curr_loss
             total_approximation_error_loss += curr_coef * curr_approximation_error_loss
             total_orthogonality_loss += curr_coef * curr_orthogonality_loss
-
+            total_frobenius_norm_loss += curr_coef * curr_frobenius_norm_loss
+        
         metrics_dict = {
             "train_loss": total_loss,
             "approximation_error_loss": total_approximation_error_loss,
             "orthogonality_loss": total_orthogonality_loss,
+            "frobenius_norm_loss": total_frobenius_norm_loss,
         }
         metrics = (
             total_loss,
             total_approximation_error_loss,
-            0.0,
             total_orthogonality_loss,
+            total_frobenius_norm_loss,
             metrics_dict,
         )
         aux = (metrics, None)

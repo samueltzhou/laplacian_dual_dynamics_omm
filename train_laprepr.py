@@ -117,6 +117,7 @@ def main(hyperparams):
     rng_key = jax.random.PRNGKey(hparam_yaml["seed"])
     hidden_dims = hparam_yaml["hidden_dims"]
     obs_mode = hparam_yaml["obs_mode"]
+    alpha = hparam_yaml["eigenvalue_shift_alpha"]
 
     # Set encoder network
     if obs_mode not in ["xy"]:
