@@ -1,5 +1,5 @@
-NAME=effseq_diagpenalty_5_12_25
-NUMBER=8
+NAME=seq_omm_eigvalshift-0.5_5_14_25
+NUMBER=4
 
 echo "DEBUG: NAME is '${NAME}'"
 echo "DEBUG: NUMBER is '${NUMBER}'"

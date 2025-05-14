@@ -60,7 +60,7 @@ class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
 
         # # use matmul instead of einsum for speed
         # return f.T @ g / f.shape[0]
-        
+
     def loss_function(self, params, train_batch, **kwargs) -> Tuple[jnp.ndarray]:
         """
         Computes the low rank loss (either LoRA or OMM) for the sequential formulation.
@@ -137,10 +137,19 @@ class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             / start_representation.shape[0]
         )
         joint_self_inner_products_matrix = jnp.diag(joint_self_inner_products)
-        
+
         # optional off diagonal penalty term
-        off_diag_penalty_mat = jnp.einsum("bi, bj -> ij", start_representation, end_representation) / start_representation.shape[0]
-        off_diag_penalty = self.d / 2 * jnp.sum((off_diag_penalty_mat - jnp.diag(jnp.diag(off_diag_penalty_mat)))**2)
+        off_diag_penalty_mat = (
+            jnp.einsum("bi, bj -> ij", start_representation, end_representation)
+            / start_representation.shape[0]
+        )
+        off_diag_penalty = (
+            self.d
+            / 2
+            * jnp.sum(
+                (off_diag_penalty_mat - jnp.diag(jnp.diag(off_diag_penalty_mat))) ** 2
+            )
+        )
         print(f"off_diag_penalty: {off_diag_penalty}")
 
         # common matrix computations for both LoRA and OMM

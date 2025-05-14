@@ -158,14 +158,14 @@ class MixedOrderSequentialOMMLossTrainer(LaplacianEncoderTrainer):
             f_f3 = f_f2 @ f_f_inner_prod
 
             matrix_poly = (
-                - 6 * jnp.eye(f_f_inner_prod.shape[0])
+                -6 * jnp.eye(f_f_inner_prod.shape[0])
                 + 7 * f_f_inner_prod
                 - 4 * f_f2
                 + 1 * f_f3
             )
 
             train_loss = jnp.sum(matrix_poly * f_tf_inner_prod)
-            
+
             if self.coefficient_normalization:
                 train_loss = train_loss / (top_i * (top_i + 1) / 2)
 

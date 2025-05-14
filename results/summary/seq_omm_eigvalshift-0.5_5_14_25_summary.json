@@ -1,0 +1,64 @@
+{
+    "run_type": "seq_omm_eigvalshift-0.5_5_14_25",
+    "num_runs": 4,
+    "gridmaze_7": {
+        "mean_cos_sim": 0.9993804842233658,
+        "std_dev_cos_sim": 1.330061154281435e-05,
+        "max_cos_sim": 0.9994023442268372
+    },
+    "gridmaze_9": {
+        "mean_cos_sim": 0.9994788020849228,
+        "std_dev_cos_sim": 4.854600499781831e-05,
+        "max_cos_sim": 0.9995211362838745
+    },
+    "gridmaze_17": {
+        "mean_cos_sim": 0.9945198446512222,
+        "std_dev_cos_sim": 9.884301678193114e-05,
+        "max_cos_sim": 0.99468994140625
+    },
+    "gridmaze_19": {
+        "mean_cos_sim": 0.9630233347415924,
+        "std_dev_cos_sim": 0.0020123762638788456,
+        "max_cos_sim": 0.96589595079422
+    },
+    "gridmaze_26": {
+        "mean_cos_sim": 0.705726757645607,
+        "std_dev_cos_sim": 0.02594288323777852,
+        "max_cos_sim": 0.7406745553016663
+    },
+    "gridmaze_32": {
+        "mean_cos_sim": 0.2865314818918705,
+        "std_dev_cos_sim": 0.029222487425131408,
+        "max_cos_sim": 0.32643675804138184
+    },
+    "gridroom_1": {
+        "mean_cos_sim": 0.9955233931541443,
+        "std_dev_cos_sim": 0.0001464710198560613,
+        "max_cos_sim": 0.995665431022644
+    },
+    "gridroom_4": {
+        "mean_cos_sim": 0.99100361764431,
+        "std_dev_cos_sim": 8.621466629869299e-05,
+        "max_cos_sim": 0.9911141991615295
+    },
+    "gridroom_16": {
+        "mean_cos_sim": 0.9859130680561066,
+        "std_dev_cos_sim": 0.0006510325033672692,
+        "max_cos_sim": 0.987028956413269
+    },
+    "gridroom_32": {
+        "mean_cos_sim": 0.7960736751556396,
+        "std_dev_cos_sim": 0.05087697422150291,
+        "max_cos_sim": 0.8494399189949036
+    },
+    "gridroom_64": {
+        "mean_cos_sim": 0.4037359431385994,
+        "std_dev_cos_sim": 0.08977207248925319,
+        "max_cos_sim": 0.5196243524551392
+    },
+    "gridroomsym_4": {
+        "mean_cos_sim": 0.8814016878604889,
+        "std_dev_cos_sim": 0.008262061350109736,
+        "max_cos_sim": 0.8943471312522888
+    }
+}

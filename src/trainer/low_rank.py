@@ -9,6 +9,7 @@ import jax.numpy as jnp
 import equinox as eqx
 
 from src.trainer.laplacian_encoder import LaplacianEncoderTrainer
+from src.trainer.constants import FROBENIUS_NORM_ALPHA
 
 MC_sample_expanded = namedtuple(
     "MC_sample_expanded",
@@ -111,6 +112,19 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             constraint_representation_2,
             start_representation_2,  # for orbitak
             end_representation_2,  # for orbital
+        )
+
+    def compute_frobenius_norm_loss(self, representation, alpha, matrix_mask):
+        """
+        Computes the Frobenius norm loss between the representation and the identity matrix.
+        """
+        return alpha * jnp.sum(
+            matrix_mask
+            * (
+                representation.T @ representation / representation.shape[0]
+                - jnp.eye(representation.shape[1])
+            )
+            ** 2
         )
 
     def compute_approximation_error_loss(
@@ -303,7 +317,18 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
         print(f"constraint_end_representation: {constraint_end_representation.shape}")
         print(f"start_representation_2: {start_representation_2.shape}")
         print(f"end_representation_2: {end_representation_2.shape}")
-
+        
+        # Create the mask in a vectorized way
+        coeff_vector_mask = jnp.arange(self.d, 0, -1)
+        coeff_vector_mask = (
+            coeff_vector_mask**2
+        )  # this is just a test, comment this out later
+        coeff_vector_mask_col = jnp.expand_dims(coeff_vector_mask, 1)  # Shape: (d, 1)
+        coeff_vector_mask_row = jnp.expand_dims(coeff_vector_mask, 0)  # Shape: (1, d)
+        coeff_matrix_mask = jnp.minimum(
+            coeff_vector_mask_col, coeff_vector_mask_row
+        )  # Shape: (d, d)
+        
         # Compute graph loss and regularization
         approximation_error_loss = self.compute_approximation_error_loss(
             start_representation, end_representation
@@ -325,8 +350,13 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
                 representation_2_end=None,
             )
 
+        frobenius_norm_loss = self.compute_frobenius_norm_loss(
+            start_representation,
+            FROBENIUS_NORM_ALPHA,
+            coeff_matrix_mask,
+        )
         # Compute total loss
-        loss = approximation_error_loss + orthogonality_loss
+        loss = approximation_error_loss + orthogonality_loss + frobenius_norm_loss
 
         metrics_dict = {
             "train_loss": loss,

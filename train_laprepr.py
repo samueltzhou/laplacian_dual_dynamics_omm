@@ -232,10 +232,12 @@ def main(hyperparams):
         Trainer = JointOMMTrainer
     elif algorithm == "sequential_lora" or algorithm == "seq_lora":
         Trainer = SequentialLoRATrainer
-        # Trainer = EfficientSequentialLoRATrainer
+    elif algorithm in ["eff_seq_lora", "efficient_seq_lora"]:
+        Trainer = EfficientSequentialLoRATrainer
     elif algorithm == "sequential_omm" or algorithm == "seq_omm":
         Trainer = SequentialOMMTrainer
-        # Trainer = EfficientSequentialOMMTrainer
+    elif algorithm in ["eff_seq_omm", "efficient_seq_omm"]:
+        Trainer = EfficientSequentialOMMTrainer
     elif (
         algorithm == "combined_lora_omm"
         or algorithm == "combined_lora"

@@ -30,7 +30,7 @@ save_model_every: 100000
 do_plot_eigenvectors: True
 obs_mode: xy
 window_size: 128
-algorithm: mixed_order_seq_omm
+algorithm: seq_omm
 asymmetric_normalization: False
 coefficient_normalization: False
 eigenvalue_shift_alpha: 0.0

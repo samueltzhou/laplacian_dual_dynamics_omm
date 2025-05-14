@@ -112,7 +112,7 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             start_representation_2,
             end_representation_2,
         )
-        
+
     def _compute_frobenius_norm_loss(self, representation, alpha):
         """
         Compute the Frobenius norm loss between the representation and the identity matrix.
@@ -124,7 +124,13 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
         Returns:
             The Frobenius norm loss.
         """
-        return alpha * jnp.sum((representation.T @ representation / representation.shape[0] - jnp.eye(representation.shape[1]))**2)
+        return alpha * jnp.sum(
+            (
+                representation.T @ representation / representation.shape[0]
+                - jnp.eye(representation.shape[1])
+            )
+            ** 2
+        )
 
     def compute_approximation_error_loss(
         self, start_representation, end_representation
@@ -356,7 +362,12 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             )
             loss = approximation_error_loss + orthogonality_loss + frobenius_norm_loss
 
-            return loss, approximation_error_loss, orthogonality_loss, frobenius_norm_loss
+            return (
+                loss,
+                approximation_error_loss,
+                orthogonality_loss,
+                frobenius_norm_loss,
+            )
 
         print("Shapes of representations in batch: ")
         print(f"start_representation: {start_representation.shape}")
@@ -374,14 +385,17 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
         total_frobenius_norm_loss = 0
         for top_i in range(1, self.d + 1):
             curr_coef = self.d - top_i + 1
-            curr_loss, curr_approximation_error_loss, curr_orthogonality_loss, curr_frobenius_norm_loss = (
-                _compute_loss_function_component(top_i)
-            )
+            (
+                curr_loss,
+                curr_approximation_error_loss,
+                curr_orthogonality_loss,
+                curr_frobenius_norm_loss,
+            ) = _compute_loss_function_component(top_i)
             total_loss += curr_coef * curr_loss
             total_approximation_error_loss += curr_coef * curr_approximation_error_loss
             total_orthogonality_loss += curr_coef * curr_orthogonality_loss
             total_frobenius_norm_loss += curr_coef * curr_frobenius_norm_loss
-        
+
         metrics_dict = {
             "train_loss": total_loss,
             "approximation_error_loss": total_approximation_error_loss,
