@@ -1,5 +1,5 @@
-NAME=allo_5_10_25
-NUMBER=2
+NAME=allo_5_12_25
+NUMBER=10
 
 echo "DEBUG: NAME is '${NAME}'"
 echo "DEBUG: NUMBER is '${NUMBER}'"
