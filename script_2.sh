@@ -1,5 +1,5 @@
-NAME=mixed_order_5_13_25
-NUMBER=3
+NAME=effseq_diagpenalty_5_12_25
+NUMBER=7
 
 echo "DEBUG: NAME is '${NAME}'"
 echo "DEBUG: NUMBER is '${NUMBER}'"

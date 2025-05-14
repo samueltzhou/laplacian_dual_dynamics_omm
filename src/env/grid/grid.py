@@ -140,6 +140,8 @@ class GridEnv(gym.Env):
 
         # Compute the dynamics matrix
         self._dyn_mat = self._maze_to_uniform_policy_dynamics()
+        print("DYNAMICS MATRIX:")
+        print(self._dyn_mat)
 
         # Compute the eigenvectors and eigenvalues of the dynamics matrix
         if eig is None:
