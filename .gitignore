@@ -131,7 +131,7 @@ dmypy.json
 .DS_Store
 
 log/*
-*.png
+# *.png
 *.pkl
 
 src/data/*
