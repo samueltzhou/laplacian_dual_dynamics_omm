@@ -10,7 +10,7 @@ max_episode_steps: 50
 seed: 1234
 env_name: GridRoom-1
 env_family: Grid-v0
-device: gpu # can also be "gpu" EXPERIMENTAL
+device: cpu # can also be "gpu" EXPERIMENTAL
 lr: 0.001
 use_lr_schedule: False # new parameter that I added to try and help training stability
 final_lr_multiplier: 0.05 # at the end of lr exponential decay, the lr is final_lr_multiplier * lr

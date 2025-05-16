@@ -7,33 +7,33 @@ from scipy.stats import ttest_ind_from_stats
 from tabulate import tabulate
 
 ENV_NAMES_UPPERCASE = [
-    # "GridMaze-7",
-    # "GridMaze-9",
-    # "GridMaze-17",
-    # "GridMaze-19",
-    # "GridMaze-26",
-    # "GridMaze-32",
-    # "GridRoom-1",
-    # "GridRoom-4",
-    # "GridRoom-16",
-    # "GridRoom-32",
+    "GridMaze-7",
+    "GridMaze-9",
+    "GridMaze-17",
+    "GridMaze-19",
+    "GridMaze-26",
+    "GridMaze-32",
+    "GridRoom-1",
+    "GridRoom-4",
+    "GridRoom-16",
+    "GridRoom-32",
     "GridRoom-64",
-    # "GridRoomSym-4",
+    "GridRoomSym-4",
 ]
 
 ENV_NAMES_LOWERCASE = [
-    # "gridmaze_7",
-    # "gridmaze_9",
-    # "gridmaze_17",
-    # "gridmaze_19",
-    # "gridmaze_26",
-    # "gridmaze_32",
-    # "gridroom_1",
-    # "gridroom_4",
-    # "gridroom_16",
-    # "gridroom_32",
+    "gridmaze_7",
+    "gridmaze_9",
+    "gridmaze_17",
+    "gridmaze_19",
+    "gridmaze_26",
+    "gridmaze_32",
+    "gridroom_1",
+    "gridroom_4",
+    "gridroom_16",
+    "gridroom_32",
     "gridroom_64",
-    # "gridroomsym_4",
+    "gridroomsym_4",
 ]
 
 # results/visuals/GridRoomSym-4/gridroomsym_4_allo_5_12_25_run_1
@@ -335,3 +335,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+# python compute_stats.py table allo_5_12_25 effseq_diagpenalty_5_12_25

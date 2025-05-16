@@ -63,7 +63,7 @@ def plot_grid_on_ax(ax, env_name, grid_array):
     # cmap='binary' maps 0 to white and 1 to black by default.
     # vmin/vmax ensures this mapping is strict for 0 and 1.
     ax.imshow(grid_array, cmap='binary', origin='upper', vmin=0, vmax=1, interpolation='nearest')
-    ax.set_title(env_name, fontsize=10) 
+    ax.set_title(env_name, fontsize=14)
     ax.set_xticks([])
     ax.set_yticks([])
 
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     for j in range(len(ENV_NAMES), len(axes)):
         axes[j].axis('off')
 
-    plt.tight_layout(pad=0.5)
+    plt.tight_layout(pad=0.5, h_pad=3.0)
     
     combined_plot_filename = os.path.join(output_dir_grids, "all_grids_layout.png")
     try:
