@@ -22,7 +22,7 @@ from src.trainer.high_order_omm import (
     HighOrderSequentialOMMLossTrainer as HighOrderSequentialOMMTrainer,
 )
 from src.trainer.mixed_order_seq_omm import (
-    MixedOrderSequentialOMMLossTrainer as MixedOrderSequentialOMMTrainer
+    MixedOrderSequentialOMMLossTrainer as MixedOrderSequentialOMMTrainer,
 )
 from functools import partial
 

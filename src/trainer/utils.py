@@ -10,6 +10,3 @@ import math
 import equinox as eqx
 
 from src.trainer.laplacian_encoder import LaplacianEncoderTrainer
-
-
-
