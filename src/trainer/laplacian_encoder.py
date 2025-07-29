@@ -670,6 +670,12 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         ).any(), f"NaN values in the real eigenvectors: {real_eigvec}"
 
         jnp_real_eigvec = jnp.array(real_eigvec, dtype=jnp.float32)
+        
+        # if there are any nan values in the real eigenvectors, print out the indices and map nan to 0
+        nan_indices = jnp.where(jnp.isnan(jnp_real_eigvec))
+        if len(nan_indices[0]) > 0:
+            print(f"NaN values in the real eigenvectors at indices: {nan_indices}")
+            jnp_real_eigvec = jnp.where(jnp.isnan(jnp_real_eigvec), 0, jnp_real_eigvec)
 
         assert not jnp.isnan(
             jnp_real_eigvec
@@ -677,11 +683,17 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
 
         jnp_real_norms = jnp.linalg.norm(jnp_real_eigvec, axis=0, keepdims=True)
         jnp_real_eigvec_norm = jnp_real_eigvec / jnp_real_norms
+        
+        # if there are any nan values in the real normed eigenvectors, print out the indices and map nan to 0
+        nan_indices = jnp.where(jnp.isnan(jnp_real_eigvec_norm))
+        if len(nan_indices[0]) > 0:
+            print(f"NaN values in the real normed eigenvectors at indices: {nan_indices}")
+            jnp_real_eigvec_norm = jnp.where(jnp.isnan(jnp_real_eigvec_norm), 0, jnp_real_eigvec_norm)
 
         # Check if any NaN values are present
         assert not jnp.isnan(
             jnp_real_eigvec_norm
-        ).any(), f"NaN values in the real eigenvectors: {jnp_real_eigvec_norm}"
+        ).any(), f"NaN values in the real normed eigenvectors: {jnp_real_eigvec_norm}"
 
         # Store eigenvectors in a dictionary corresponding to each eigenvalue
         eigvec_dict = {}

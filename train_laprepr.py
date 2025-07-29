@@ -145,6 +145,7 @@ def main(hyperparams):
     lr_init = hparam_yaml["lr"]
     use_lr_schedule = hparam_yaml.get("use_lr_schedule", False)
     linear_warmup = hparam_yaml.get("linear_warmup", False)
+    print(f"DEBUG: linear_warmup: {linear_warmup}")
     total_train_steps = hparam_yaml["total_train_steps"]
     final_multiplier = hparam_yaml.get("final_lr_multiplier", 0.01)
 
@@ -401,9 +402,7 @@ if __name__ == "__main__":
     
     parser.add_argument(
         "--linear_warmup",
-        type=bool,
-        choices=[True, False],
-        default=False,
+        action="store_true",
         help="Whether to use a linear warmup for the learning rate. If True, increases from 0 to lr in the first 0.1 * training steps.",
     )
 

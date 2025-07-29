@@ -4,6 +4,7 @@ from itertools import product
 import numpy as np
 import jax
 import jax.numpy as jnp
+import functools  # Added for JIT decorator
 
 import haiku as hk
 
@@ -305,6 +306,7 @@ class GeneralizedAugmentedLagrangianTrainer(LaplacianEncoderTrainer, ABC):
         params = self.update_barrier_coefficients(params, *args, **kwargs)
         return params
 
+    @functools.partial(jax.jit, static_argnums=0)
     def update_duals(self, params):
         """
         Update dual variables using some approximation

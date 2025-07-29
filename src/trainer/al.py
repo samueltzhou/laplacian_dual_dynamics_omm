@@ -3,6 +3,7 @@ from itertools import product
 import numpy as np
 import jax
 import jax.numpy as jnp
+import functools  # Added for JIT decorator
 
 import haiku as hk
 
@@ -39,6 +40,7 @@ class AugmentedLagrangianTrainer(GeneralizedAugmentedLagrangianTrainer):
 
         return dual_loss, barrier_loss, dual_dict
 
+    @functools.partial(jax.jit, static_argnums=0)
     def update_barrier_coefficients(self, params, *args, **kwargs):
         """
         Update barrier coefficients using some approximation
@@ -80,6 +82,7 @@ class AugmentedLagrangianTrainer(GeneralizedAugmentedLagrangianTrainer):
 
         return loss, aux
 
+    @functools.partial(jax.jit, static_argnums=0)
     def update_duals(self, params):
         """
         Update dual variables using some approximation

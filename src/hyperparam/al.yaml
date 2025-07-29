@@ -1,4 +1,4 @@
-d: 11
+d: 50
 n_samples: 5000000 # normally 200000
 batch_size: 1024
 discount: 0.9

@@ -13,7 +13,7 @@ env_family: Grid-v0
 device: cpu # can also be "gpu" EXPERIMENTAL
 lr: 0.002 # originally 0.001
 use_lr_schedule: False # new parameter that I added to try and help training stability
-linear_warmup: True # new parameter that I added to try and help training stability
+linear_warmup: False # new parameter that I added to try and help training stability
 final_lr_multiplier: 0.05 # at the end of lr exponential decay, the lr is final_lr_multiplier * lr
 use_wandb: True
 hidden_dims:

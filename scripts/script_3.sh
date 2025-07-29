@@ -1,5 +1,5 @@
-NAME=eff_omm_seq_FROBENIUS_FIXED_7_28_25_dim_50_lr_2e-3_n_samples_5000000_layernorm_off
-RUN_NUMBER=1
+NAME=eff_omm_seq_FROBENIUS_FIXED_7_28_25_dim_50_lr_2e-3_n_samples_5000000
+RUN_NUMBER=2
 
 envs=(GridMaze-17 GridMaze-19 GridMaze-26 GridMaze-32 GridRoom-1 GridRoom-4 GridRoom-16 GridRoom-32 GridRoom-64 GridRoomSym-4)
 

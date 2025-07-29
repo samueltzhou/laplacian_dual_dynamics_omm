@@ -1,21 +1,14 @@
-NAME=allo_5_12_25
-NUMBER=9
+NAME=allo_7_29_25_dim_50_n_samples_5000000_default_barrier_2.0_barrier_lr_0.01
+RUN_NUMBER=1
+envs=(GridMaze-17 GridMaze-19 GridMaze-26 GridMaze-32 GridRoom-1 GridRoom-4 GridRoom-16 GridRoom-32 GridRoom-64 GridRoomSym-4)
 
-echo "DEBUG: NAME is '${NAME}'"
-echo "DEBUG: NUMBER is '${NUMBER}'"
-echo "DEBUG: Constructing exp_label as gridmaze_7_${NAME}_run_${NUMBER}"
-
-python train_laprepr.py gridmaze_7_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridMaze-7
-python train_laprepr.py gridmaze_9_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridMaze-9
-python train_laprepr.py gridmaze_17_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridMaze-17
-python train_laprepr.py gridmaze_19_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridMaze-19
-python train_laprepr.py gridmaze_26_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridMaze-26
-python train_laprepr.py gridmaze_32_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridMaze-32
-python train_laprepr.py gridroom_1_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridRoom-1
-python train_laprepr.py gridroom_4_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridRoom-4
-python train_laprepr.py gridroom_16_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridRoom-16
-python train_laprepr.py gridroom_32_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridRoom-32
-python train_laprepr.py gridroom_64_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridRoom-64
-python train_laprepr.py gridroomsym_4_${NAME}_run_${NUMBER} --config_file al.yaml --use_wandb --env_name GridRoomSym-4
-
-
+for env in "${envs[@]}"; do
+  CUDA_VISIBLE_DEVICES=0 \
+  python train_laprepr.py \
+    ${NAME}_${env}_run_${RUN_NUMBER} \
+    --config_file al.yaml \
+    --use_wandb \
+    --env_name ${env} \
+    --barrier_initial_val 2.0 \
+    --lr_barrier_coefs 0.01
+done
