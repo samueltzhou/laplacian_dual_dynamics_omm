@@ -8,11 +8,24 @@ def generate_fc_layers(
     output_dim: int,
     hidden_dims: List[int],
     activation: str = "relu",
+    use_layer_norm: bool = False,
 ) -> List[hk.Module]:
-    """Generate layers for MLP."""
+    """Generate layers for MLP.
+
+    Args:
+        output_dim: Size of the final linear layer.
+        hidden_dims: List containing the widths of the hidden layers.
+        activation: Activation function to use between layers ("relu" or "leaky_relu").
+        use_layer_norm: If True, inserts a ``hk.LayerNorm`` after each linear layer. This
+            can help stabilise training and mitigate issues such as dying neurons.
+    """
     layers = []
     for dim in hidden_dims:
         layers.append(hk.Linear(dim))
+        if use_layer_norm:
+            # LayerNorm over the feature dimension (last axis).
+            layers.append(hk.LayerNorm(axis=-1, create_scale=True, create_offset=True))
+
         if activation == "relu":
             layers.append(jax.nn.relu)
         elif activation == "leaky_relu":
@@ -71,15 +84,16 @@ class MLP(hk.Module):
         output_dim: int,
         hidden_dims: List[int],
         activation: str = "relu",
+        use_layer_norm: bool = False,
         name: str = "MLP",
     ) -> None:
         super().__init__(name=name)
         print(
-            f"MLP with the following parameters: hidden dims {hidden_dims}, activation {activation}, output dim {output_dim}"
+            f"MLP with the following parameters: hidden dims {hidden_dims}, activation {activation}, output dim {output_dim}, layer_norm {use_layer_norm}"
         )
 
         self.sequential = hk.Sequential(
-            generate_fc_layers(output_dim, hidden_dims, activation)
+            generate_fc_layers(output_dim, hidden_dims, activation, use_layer_norm)
         )
 
     def __call__(self, x: np.ndarray) -> jax.Array:

@@ -24,7 +24,9 @@ from src.trainer import (
     EfficientSequentialOMMTrainer,
     CombinedLoRATrainer,
     HighOrderSequentialOMMTrainer,
-    MixedOrderSequentialOMMTrainer
+    MixedOrderSequentialOMMTrainer,
+    JointOMMObjectiveTrainerV2,
+    JointSquaredOMMObjectiveTrainer,
 )
 from src.agent.episodic_replay_buffer import EpisodicReplayBuffer
 
@@ -117,7 +119,8 @@ def main(hyperparams):
     rng_key = jax.random.PRNGKey(hparam_yaml["seed"])
     hidden_dims = hparam_yaml["hidden_dims"]
     obs_mode = hparam_yaml["obs_mode"]
-    alpha = hparam_yaml["eigenvalue_shift_alpha"]
+    use_layer_norm = hparam_yaml["use_layer_norm"]
+    # alpha = hparam_yaml["eigenvalue_shift_alpha"]
 
     # Set encoder network
     if obs_mode not in ["xy"]:
@@ -136,11 +139,12 @@ def main(hyperparams):
     hparam_yaml.update(specific_params)
 
     encoder_fn = generate_hk_module_fn(
-        encoder_net, d, hidden_dims, hparam_yaml["activation"], **specific_params
+        encoder_net, d, hidden_dims, hparam_yaml["activation"], use_layer_norm, **specific_params
     )  # TODO: Consider the observation space (e.g. pixels)
 
     lr_init = hparam_yaml["lr"]
     use_lr_schedule = hparam_yaml.get("use_lr_schedule", False)
+    linear_warmup = hparam_yaml.get("linear_warmup", False)
     total_train_steps = hparam_yaml["total_train_steps"]
     final_multiplier = hparam_yaml.get("final_lr_multiplier", 0.01)
 
@@ -192,6 +196,15 @@ def main(hyperparams):
         )
 
         optimizer = optax.adam(schedule_fn)
+    elif linear_warmup:
+        # Use linear warmup
+        print(f"Using a linear warmup learning rate schedule with warmup steps {total_train_steps // 10} up to a constant value of {lr_init}, total_train_steps {total_train_steps}")
+        schedule_fn = optax.linear_schedule(
+            init_value=0.0,
+            end_value=lr_init,
+            transition_steps=total_train_steps // 10,
+        )
+        optimizer = optax.adam(schedule_fn)
     else:
         # Use constant learning rate
         print(f"Using a constant learning rate of {lr_init}")
@@ -213,11 +226,13 @@ def main(hyperparams):
             project="laplacian-encoder",
             dir=hparam_yaml["save_dir"],
             config=hparam_yaml,
+            name=hparam_yaml.get("exp_label", None),
         )
         # wandb_logger.watch(laplacian_encoder)   # TODO: Test overhead
     else:
         logger = None
 
+    print(f"algorithm: {algorithm}")
     if algorithm == "ggdo":
         Trainer = GeneralizedGraphDrawingObjectiveTrainer
     elif algorithm == "al":
@@ -230,6 +245,11 @@ def main(hyperparams):
         Trainer = JointLoRATrainer
     elif algorithm == "omm" or algorithm == "joint_omm":
         Trainer = JointOMMTrainer
+        # Trainer = JointOMMObjectiveTrainerV2
+    elif algorithm == "joint_omm_new":
+        Trainer = JointOMMObjectiveTrainerV2
+    elif algorithm == "joint_omm_squared":
+        Trainer = JointSquaredOMMObjectiveTrainer
     elif algorithm == "sequential_lora" or algorithm == "seq_lora":
         Trainer = SequentialLoRATrainer
     elif algorithm in ["eff_seq_lora", "efficient_seq_lora"]:
@@ -378,7 +398,17 @@ if __name__ == "__main__":
         choices=["cpu", "gpu"],
         help="Device to use for JAX computations (e.g., 'cpu', 'gpu'). JAX will attempt to use the specified platform.",
     )
+    
+    parser.add_argument(
+        "--linear_warmup",
+        type=bool,
+        choices=[True, False],
+        default=False,
+        help="Whether to use a linear warmup for the learning rate. If True, increases from 0 to lr in the first 0.1 * training steps.",
+    )
 
     hyperparams = parser.parse_args()
+    
+    print(f"DEBUG: hyperparams: {hyperparams}")
 
     main(hyperparams)

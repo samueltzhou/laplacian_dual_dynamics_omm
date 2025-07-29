@@ -9,7 +9,7 @@ import jax.numpy as jnp
 import equinox as eqx
 
 from src.trainer.laplacian_encoder import LaplacianEncoderTrainer
-from src.trainer.constants import FROBENIUS_NORM_ALPHA
+from src.trainer.constants import *
 
 MC_sample_expanded = namedtuple(
     "MC_sample_expanded",
@@ -114,11 +114,14 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             end_representation_2,  # for orbital
         )
 
-    def compute_frobenius_norm_loss(self, representation, alpha, matrix_mask):
+    def compute_frobenius_norm_loss(self, representation, matrix_mask):
         """
         Computes the Frobenius norm loss between the representation and the identity matrix.
+        
+        This is ||rep.T @ rep - I||_2. Bias factor removed, bias is to be multiplied in during the
+        actual loss computation.
         """
-        return alpha * jnp.sum(
+        return jnp.sum(
             matrix_mask
             * (
                 representation.T @ representation / representation.shape[0]
@@ -154,7 +157,7 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
         # loss = -2 * ((start_representation - end_representation)**2).mean() # need to recheck this...
         loss = 0
         coeff_mask = jnp.arange(self.d, 0, -1)  # for joint LoRA
-        coeff_mask = coeff_mask**2  # this is just a test, comment this out later
+        # coeff_mask = coeff_mask**2  # this is just a test, comment this out later
         if len(start_representation.shape) == 1 and len(end_representation.shape) == 1:
             print("one dimensional approximation error loss")
 
@@ -228,9 +231,9 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
 
         # Create the mask in a vectorized way
         coeff_vector_mask = jnp.arange(self.d, 0, -1)
-        coeff_vector_mask = (
-            coeff_vector_mask**2
-        )  # this is just a test, comment this out later
+        # coeff_vector_mask = (
+        #     coeff_vector_mask**2
+        # )  # this is just a test, comment this out later
         coeff_vector_mask_col = jnp.expand_dims(coeff_vector_mask, 1)  # Shape: (d, 1)
         coeff_vector_mask_row = jnp.expand_dims(coeff_vector_mask, 0)  # Shape: (1, d)
         coeff_matrix_mask = jnp.minimum(
@@ -320,9 +323,9 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
         
         # Create the mask in a vectorized way
         coeff_vector_mask = jnp.arange(self.d, 0, -1)
-        coeff_vector_mask = (
-            coeff_vector_mask**2
-        )  # this is just a test, comment this out later
+        # coeff_vector_mask = (
+        #     coeff_vector_mask**2
+        # )  # this is just a test, comment this out later
         coeff_vector_mask_col = jnp.expand_dims(coeff_vector_mask, 1)  # Shape: (d, 1)
         coeff_vector_mask_row = jnp.expand_dims(coeff_vector_mask, 0)  # Shape: (1, d)
         coeff_matrix_mask = jnp.minimum(
@@ -351,13 +354,16 @@ class JointLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             )
 
         frobenius_norm_loss = self.compute_frobenius_norm_loss(
-            start_representation,
-            FROBENIUS_NORM_ALPHA,
+            constraint_end_representation,
             coeff_matrix_mask,
         )
-        # Compute total loss
-        loss = approximation_error_loss + orthogonality_loss + frobenius_norm_loss
-
+        
+        # Compute total loss. NOTE: WITH NON-DEFAULT BIAS AND GAIN, THIS HAS TO BE WITH ORBITALS
+        loss = (
+            FROBENIUS_NORM_GAIN * (approximation_error_loss + orthogonality_loss) +
+            FROBENIUS_NORM_BIAS * frobenius_norm_loss
+        )
+        
         metrics_dict = {
             "train_loss": loss,
             "approximation_error_loss": approximation_error_loss,

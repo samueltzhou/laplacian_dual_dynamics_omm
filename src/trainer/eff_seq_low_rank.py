@@ -10,6 +10,7 @@ import math
 import equinox as eqx
 
 from src.trainer.laplacian_encoder import LaplacianEncoderTrainer
+from src.trainer.constants import *
 
 
 class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
@@ -60,7 +61,29 @@ class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
 
         # # use matmul instead of einsum for speed
         # return f.T @ g / f.shape[0]
+        
+    def _compute_frobenius_norm_loss(self, representation):
+        """
+        Compute the Frobenius norm loss between the representation and the identity matrix.
 
+        Args:
+            representation: The representation of the state. Shape (B, d)
+
+        Returns:
+            The Frobenius norm loss.
+        """
+        lower_mask = jnp.tril(jnp.ones((self.d, self.d)), k=-1)
+        upper_mask = lower_mask.T
+        diag_mask = jnp.eye(self.d)
+
+        representation_sg = jax.lax.stop_gradient(representation)
+        triangle_1 = self._compute_indexwise_products(representation_sg, representation) * lower_mask
+        triangle_2 = self._compute_indexwise_products(representation, representation_sg) * upper_mask
+        diag = self._compute_indexwise_products(representation, representation) * diag_mask
+
+        combined_matrix = triangle_1 + triangle_2 + diag
+        return jnp.sum((combined_matrix - jnp.eye(self.d))**2)
+        
     def loss_function(self, params, train_batch, **kwargs) -> Tuple[jnp.ndarray]:
         """
         Computes the low rank loss (either LoRA or OMM) for the sequential formulation.
@@ -193,7 +216,7 @@ class EfficientSequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
                 vector_mask * joint_self_inner_products
             )
             orthogonality_loss = jnp.sum(matrix_mask * cov_indexwise_products**2)
-        train_loss = approximation_error_loss + orthogonality_loss + off_diag_penalty
+        train_loss = approximation_error_loss + orthogonality_loss + FROBENIUS_NORM_BIAS * self._compute_frobenius_norm_loss(start_representation)
 
         if self.coefficient_normalization:
             approximation_error_loss = approximation_error_loss / (

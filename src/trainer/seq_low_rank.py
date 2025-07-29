@@ -9,7 +9,7 @@ import jax.numpy as jnp
 import equinox as eqx
 
 from src.trainer.laplacian_encoder import LaplacianEncoderTrainer
-from src.trainer.constants import FROBENIUS_NORM_ALPHA
+from src.trainer.constants import *
 
 MC_sample_expanded = namedtuple(
     "MC_sample_expanded",
@@ -358,7 +358,7 @@ class SequentialLowRankObjectiveTrainer(LaplacianEncoderTrainer):
             )
             frobenius_norm_loss = self._compute_frobenius_norm_loss(
                 self._build_stop_grad_encoding(start_representation, top_i),
-                FROBENIUS_NORM_ALPHA,
+                FROBENIUS_NORM_BIAS,
             )
             loss = approximation_error_loss + orthogonality_loss + frobenius_norm_loss
 

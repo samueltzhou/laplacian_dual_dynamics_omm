@@ -24,6 +24,8 @@ from src.trainer.high_order_omm import (
 from src.trainer.mixed_order_seq_omm import (
     MixedOrderSequentialOMMLossTrainer as MixedOrderSequentialOMMTrainer,
 )
+from src.trainer.joint_low_rank import JointOMMObjectiveTrainerV2 as JointOMMObjectiveTrainerV2
+from src.trainer.joint_low_rank import JointSquaredOMMObjectiveTrainer as JointSquaredOMMObjectiveTrainer
 from functools import partial
 
 # Create a specialized version of LowRankObjectiveTrainer with orbital_enabled=True for OMM

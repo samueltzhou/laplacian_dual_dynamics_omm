@@ -109,6 +109,9 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         # Compute the gradients and associated intermediate metrics
         grads, aux = jax.grad(self.loss_function, has_aux=True)(params, train_batch)
 
+        # Compute gradient statistics BEFORE applying optimizer updates
+        grad_norm, grad_ratio = self._compute_grad_stats(grads, params)
+
         # Determine the real parameter updates
         updates, opt_state = self.optimizer.update(grads, opt_state)
 
@@ -118,13 +121,17 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         # Update the training state
         params = self.update_training_state(params, aux[1])
 
-        return params, opt_state, aux[0]
+        # Return gradient statistics together with existing metrics
+        return params, opt_state, aux[0], grad_norm, grad_ratio
 
     def train_step_non_permuted(self, params, train_batch, opt_state) -> None:
 
         # Compute the gradients and associated intermediate metrics
         grads, aux = jax.grad(self.loss_function, has_aux=True)(params, train_batch)
 
+        # Compute gradient statistics
+        grad_norm, grad_ratio = self._compute_grad_stats(grads, params)
+
         # Determine the real parameter updates
         updates, opt_state = self.optimizer.update(grads, opt_state)
 
@@ -134,7 +141,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         # Update the training state
         params = self.update_training_state(params, aux[1])
 
-        return params, opt_state, aux[0]
+        return params, opt_state, aux[0], grad_norm, grad_ratio
 
     def train_step_permuted(self, params, train_batch, opt_state) -> None:
 
@@ -143,6 +150,9 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
             params, train_batch
         )
 
+        # Compute gradient statistics
+        grad_norm, grad_ratio = self._compute_grad_stats(grads, params)
+
         # Determine the real parameter updates
         updates, opt_state = self.optimizer.update(grads, opt_state)
 
@@ -152,7 +162,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         # Update the training state
         params = self.update_training_state(params, aux[1])
 
-        return params, opt_state, aux[0]
+        return params, opt_state, aux[0], grad_norm, grad_ratio
 
     @property
     def is_permute_phase(self):
@@ -206,7 +216,7 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
                 self.permutation_array = jax.random.permutation(next(rng), self.d)
                 self.init_train_functions()
 
-            params, opt_state, metrics = self.jitted_train_step(
+            params, opt_state, metrics, grad_norm, grad_ratio = self.jitted_train_step(
                 params, train_batch, opt_state
             )
 
@@ -250,6 +260,17 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
                     if self.logger is not None:
                         self.logger.log(metrics_dict)
 
+                # Add gradient statistics to metrics_dict
+                metrics_dict["grad_norm"] = grad_norm
+                metrics_dict["grad_ratio"] = grad_ratio
+
+                # Store gradient statistics for plots
+                self.grad_norm_history.append(float(jax.device_get(grad_norm)))
+                self.grad_ratio_history.append(float(jax.device_get(grad_ratio)))
+
+                self.train_info["grad_norm"] = self.grad_norm_history[-1]
+                self.train_info["grad_ratio"] = self.grad_ratio_history[-1]
+
             is_last_step = (step + 1) == self.total_train_steps
             is_plot_step = self.do_plot_eigenvectors and (
                 is_last_step or is_permutation_step
@@ -267,6 +288,10 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
 
         time_cost = timer.time_cost()
         print(f"Training finished, time cost {time_cost:.4g}s.")
+
+        # Generate and save gradient statistic plots
+        self._generate_grad_norm_plot()
+        self._generate_grad_ratio_plot()
 
     def _compute_additional_metrics(self, params, metrics_dict):
         """Compute additional metrics (cosine similarity, so far)."""
@@ -316,6 +341,32 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
         self.train_info["max_cos_sim"] = np.array([jax.device_get(maximal_cs)])[0]
 
         self._update_history()
+
+        # --- Activation statistics (optional) ---
+        if hasattr(self, "log_activation_stats") and not self.log_activation_stats:
+            return metrics_dict
+
+        try:
+            # Sample a small batch of states (up to 128) to avoid overhead
+            states = self.get_states()
+            sample_size = min(128, states.shape[0])
+            sample_states = states[:sample_size]
+
+            # Run encoder in stats-collecting mode (only supported by our MLP/ConvNet wrapper)
+            output, activations = self.encoder_fn.apply(
+                params["encoder"], sample_states, collect_stats=True
+            )
+
+            # Compute simple statistics per activation tensor
+            for name, act in activations.items():
+                # Zero fraction after non-linearities – indicator of dead neurons
+                zero_frac = (act == 0).mean()
+                act_l2 = jnp.linalg.norm(act) / jnp.sqrt(act.size)
+                metrics_dict[f"act_zero_frac_{name}"] = zero_frac
+                metrics_dict[f"act_l2_{name}"] = act_l2
+        except TypeError:
+            # collect_stats unsupported by the encoder (e.g., older checkpoints) – skip silently
+            pass
 
         return metrics_dict
 
@@ -545,6 +596,9 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
     def reset_counters(self) -> None:
         self.step_counter = 0
         self.log_counter = 0
+        # Store gradient statistics for later plotting
+        self.grad_norm_history = []
+        self.grad_ratio_history = []
 
     def update_counters(self) -> None:
         self.step_counter += 1
@@ -1300,3 +1354,63 @@ class LaplacianEncoderTrainer(Trainer, ABC):  # TODO: Handle device
     @abstractmethod
     def additional_update_step(self, *args, **kwargs):
         raise NotImplementedError
+
+    def _compute_grad_stats(self, grads, params):
+        """Compute global L2 norm of the gradients and the ratio w.r.t. parameter norm."""
+        # Sum of squared gradients across all parameters
+        grad_sq_sum = sum([jnp.sum(jnp.square(g)) for g in jax.tree_util.tree_leaves(grads)])
+        param_sq_sum = sum([jnp.sum(jnp.square(p)) for p in jax.tree_util.tree_leaves(params)])
+        grad_norm = jnp.sqrt(grad_sq_sum)
+        param_norm = jnp.sqrt(param_sq_sum) + 1e-12  # avoid division by zero
+        grad_ratio = grad_norm / param_norm
+        return grad_norm, grad_ratio
+
+    def _generate_grad_norm_plot(self):
+        """Generate and save a plot of gradient norm over training."""
+        import matplotlib.pyplot as plt
+        # Create the plot
+        plt.figure(figsize=(10, 6))
+        x_values = [step / 10000 for step in self.history["steps"]]
+        plt.plot(x_values, self.grad_norm_history, "b-", linewidth=2)
+        plt.xlabel("Gradient Updates (×10⁴)", fontsize=14)
+        plt.ylabel("Gradient L2 Norm", fontsize=14)
+        plt.title(f"{self.env_name} - Gradient Norm", fontsize=16)
+        plt.grid(True, linestyle="--", alpha=0.7)
+        save_dir = f"./results/visuals/{self.env_name}/{self.exp_label}/plots/"
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = f"{save_dir}grad_norm_plot.png"
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+        print(f"Gradient norm plot saved to: {save_path}")
+
+        # If using wandb, log the image
+        if self.use_wandb and self.logger is not None:
+            try:
+                self.logger.log({"grad_norm_plot": wandb.Image(save_path)})
+            except Exception as e:
+                print(f"Failed to log grad norm plot to wandb: {e}")
+
+    def _generate_grad_ratio_plot(self):
+        """Generate and save a plot of gradient-to-weight norm ratio over training."""
+        import matplotlib.pyplot as plt
+        # Create the plot
+        plt.figure(figsize=(10, 6))
+        x_values = [step / 10000 for step in self.history["steps"]]
+        plt.plot(x_values, self.grad_ratio_history, "b-", linewidth=2)
+        plt.xlabel("Gradient Updates (×10⁴)", fontsize=14)
+        plt.ylabel("Grad / Param Norm Ratio", fontsize=14)
+        plt.title(f"{self.env_name} - Grad-to-Param Ratio", fontsize=16)
+        plt.grid(True, linestyle="--", alpha=0.7)
+        save_dir = f"./results/visuals/{self.env_name}/{self.exp_label}/plots/"
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = f"{save_dir}grad_ratio_plot.png"
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+        print(f"Gradient ratio plot saved to: {save_path}")
+
+        # If using wandb, log the image
+        if self.use_wandb and self.logger is not None:
+            try:
+                self.logger.log({"grad_ratio_plot": wandb.Image(save_path)})
+            except Exception as e:
+                print(f"Failed to log grad ratio plot to wandb: {e}")

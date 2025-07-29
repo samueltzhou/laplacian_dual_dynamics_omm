@@ -1,9 +1,9 @@
 d: 11
-n_samples: 100000
+n_samples: 5000000
 batch_size: 1024
 discount: 0.9
 log_dir: '/tmp/rl_laprepr/log'
-total_train_steps: 20000
+total_train_steps: 80000
 print_freq: 1000
 save_freq: 10000
 max_episode_steps: 50
@@ -17,6 +17,7 @@ hidden_dims:
   - 256
   - 256
 activation: relu
+use_layer_norm: False
 eigval_precision_order: 16
 reduction_factor: 1
 permute_step: 20000

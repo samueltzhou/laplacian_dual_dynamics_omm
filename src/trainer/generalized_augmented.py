@@ -35,20 +35,22 @@ class GeneralizedAugmentedLagrangianTrainer(LaplacianEncoderTrainer, ABC):
         n = represetantation_batch_1.shape[0]
 
         inner_product_matrix_1 = (
-            jnp.einsum(
-                "ij,ik->jk",
-                represetantation_batch_1,
-                jax.lax.stop_gradient(represetantation_batch_1),
-            )
+            # jnp.einsum(
+            #     "ij,ik->jk",
+            #     represetantation_batch_1,
+            #     jax.lax.stop_gradient(represetantation_batch_1),
+            # )
+            represetantation_batch_1.T @ jax.lax.stop_gradient(represetantation_batch_1)
             / n
         )
 
         inner_product_matrix_2 = (
-            jnp.einsum(
-                "ij,ik->jk",
-                represetantation_batch_2,
-                jax.lax.stop_gradient(represetantation_batch_2),
-            )
+            # jnp.einsum(
+            #     "ij,ik->jk",
+            #     represetantation_batch_2,
+            #     jax.lax.stop_gradient(represetantation_batch_2),
+            # )
+            represetantation_batch_2.T @ jax.lax.stop_gradient(represetantation_batch_2)
             / n
         )
 
