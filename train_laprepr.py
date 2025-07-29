@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 import random
 import subprocess
 import numpy as np
+import struct
 
 import jax
 import jax.numpy as jnp
@@ -103,8 +104,14 @@ def main(hyperparams):
 
 
     # Set random seed
-    np.random.seed(hparam_yaml["seed"])
-    random.seed(hparam_yaml["seed"])
+    seed = hparam_yaml.get("seed", None)
+    if seed is None or seed < 0:           # use −1 or omit to request randomness
+        seed = struct.unpack("<I", os.urandom(4))[0]
+        hparam_yaml["seed"] = seed         # keep it so you can log / reproduce later
+        print(f"Picked random seed {seed}")
+    np.random.seed(seed)
+    random.seed(seed)
+    rng_key = jax.random.PRNGKey(seed)
 
     # Initialize timer
     timer = timer_tools.Timer()
@@ -116,7 +123,6 @@ def main(hyperparams):
     # Create trainer
     d = hparam_yaml["d"]
     algorithm = hparam_yaml["algorithm"]
-    rng_key = jax.random.PRNGKey(hparam_yaml["seed"])
     hidden_dims = hparam_yaml["hidden_dims"]
     obs_mode = hparam_yaml["obs_mode"]
     use_layer_norm = hparam_yaml["use_layer_norm"]
