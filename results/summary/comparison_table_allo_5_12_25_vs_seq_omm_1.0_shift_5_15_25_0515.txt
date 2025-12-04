@@ -1,6 +1,0 @@
-Comparison: Base Run Type: allo_5_12_25 vs. Hypothesis Run Type: seq_omm_1.0_shift_5_15_25
-Significance Level for highlighting (console): 0.05
-
-Env            allo_5_12_25     seq_omm_1.0_shift_5_15_25      t-statistic    p-value
--------------  ---------------  ---------------------------  -------------  ---------
-GridRoomSym-4  0.9795 (0.0101)  0.9686 (0.0031)                    -3.0667      0.995

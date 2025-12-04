@@ -1,9 +1,0 @@
-{
-    "run_type": "joint_omm_1.0_shift",
-    "num_runs": 4,
-    "gridroomsym_4": {
-        "mean_cos_sim": null,
-        "std_dev_cos_sim": null,
-        "max_cos_sim": null
-    }
-}

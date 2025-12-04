@@ -1,6 +1,0 @@
-Comparison: Base Run Type: allo_5_12_25 vs. Hypothesis Run Type: joint_omm_1.0_shift_5_15_25
-Significance Level for highlighting (console): 0.05
-
-Env         allo_5_12_25     joint_omm_1.0_shift_5_15_25      t-statistic    p-value
-----------  ---------------  -----------------------------  -------------  ---------
-GridRoom-1  0.9983 (0.0001)  0.9961 (0.0000)                      -46.767          1
