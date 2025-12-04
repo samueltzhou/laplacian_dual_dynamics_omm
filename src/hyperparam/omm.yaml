@@ -1,20 +1,20 @@
-d: 50
-n_samples: 5000000 # normally 200000 (1 million in big experiment)
+d: 11
+n_samples: 200000 # normally 200000 (1 million in big experiment)
 batch_size: 1024
 discount: 0.9
 log_dir: '/tmp/rl_laprepr/log'
-total_train_steps: 80000 # normally 20000 (80000 in big experiment)
+total_train_steps: 20000 # normally 20000 (80000 in big experiment)
 print_freq: 200
 save_freq: 10000
 max_episode_steps: 50
 seed: 1234
 env_name: GridRoom-1
 env_family: Grid-v0
-device: cpu # can also be "gpu" EXPERIMENTAL
-lr: 0.002 # originally 0.001
-use_lr_schedule: False # new parameter that I added to try and help training stability
-linear_warmup: False # new parameter that I added to try and help training stability
-final_lr_multiplier: 0.05 # at the end of lr exponential decay, the lr is final_lr_multiplier * lr
+device: cpu
+lr: 0.001
+use_lr_schedule: False
+linear_warmup: False # very helpful for initial training stability
+final_lr_multiplier: 0.05
 use_wandb: True
 hidden_dims:
   - 256
@@ -24,7 +24,7 @@ activation: relu
 use_layer_norm: False
 eigval_precision_order: 16
 reduction_factor: 1
-permute_step: 200000 # make this effectively infinite cuz it really messes it up
+permute_step: 200000
 direct_rotation: True
 save_eig: True
 save_model: False
