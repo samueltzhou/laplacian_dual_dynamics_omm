@@ -136,6 +136,6 @@ log/*
 
 src/data/*
 wandb
-results
-# src/env/grid/eigval
+results/*
+src/env/grid/eigval
 learned_eigenvector*
