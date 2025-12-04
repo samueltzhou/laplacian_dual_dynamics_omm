@@ -1,0 +1,37 @@
+d: 11
+n_samples: 5000000 # normally 200000 (1 million in big experiment)
+batch_size: 1024
+discount: 0.9
+log_dir: '/tmp/rl_laprepr/log'
+total_train_steps: 80000 # normally 20000 (80000 in big experiment)
+print_freq: 200
+save_freq: 10000
+max_episode_steps: 50
+seed: 1234
+env_name: GridMaze-7
+env_family: Grid-v0
+device: gpu # can also be "gpu" EXPERIMENTAL
+lr: 0.001 # originally 1e-3
+use_lr_schedule: False # new parameter that I added to try and help training stability
+final_lr_multiplier: 0.05 # at the end of lr exponential decay, the lr is final_lr_multiplier * lr
+use_wandb: True
+hidden_dims:
+  - 256
+  - 256
+  - 256
+activation: relu
+use_layer_norm: True
+eigval_precision_order: 16
+reduction_factor: 1
+permute_step: 200000 # make this effectively infinite cuz it really messes it up
+direct_rotation: True
+save_eig: True
+save_model: False
+save_model_every: 100000
+do_plot_eigenvectors: True
+obs_mode: xy
+window_size: 128
+algorithm: joint_omm
+asymmetric_normalization: False
+coefficient_normalization: False
+eigenvalue_shift_alpha: 0.0

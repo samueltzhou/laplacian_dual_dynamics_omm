@@ -6,10 +6,10 @@ import gymnasium as gym
 
 
 if __name__ == "__main__":
-    env_name = 'ALE/MontezumaRevenge-v5'
-    save_path = f'./results/visuals/atari/{env_name[4:-3]}/trajectories.npy'
+    env_name = "ALE/MontezumaRevenge-v5"
+    save_path = f"./results/visuals/atari/{env_name[4:-3]}/trajectories.npy"
     obs_list = []
-    
+
     # Create environment
     env = gym.make(
         env_name,
@@ -21,7 +21,9 @@ if __name__ == "__main__":
     obs_list = [observation]
 
     for i in range(100):
-        action = env.action_space.sample()  # agent policy that uses the observation and info
+        action = (
+            env.action_space.sample()
+        )  # agent policy that uses the observation and info
         observation, reward, terminated, truncated, info = env.step(action)
         obs_list.append(observation)
 
@@ -36,6 +38,6 @@ if __name__ == "__main__":
 
     # Save observations
 
-    with open(save_path, 'wb') as file:
+    with open(save_path, "wb") as file:
         observations = np.stack(obs_list, axis=0)
         np.save(file, observations)
