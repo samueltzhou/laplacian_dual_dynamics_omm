@@ -13,7 +13,7 @@ env_family: Grid-v0
 device: cpu
 lr: 0.001
 use_lr_schedule: False
-linear_warmup: False # very helpful for initial training stability
+linear_warmup: False # very helpful for initial training stability, fixed at first 10% of training steps
 final_lr_multiplier: 0.05
 use_wandb: True
 hidden_dims:
@@ -32,7 +32,7 @@ save_model_every: 100000
 do_plot_eigenvectors: True
 obs_mode: xy
 window_size: 128
-algorithm: eff_seq_omm
+algorithm: seq_omm
 asymmetric_normalization: False
 coefficient_normalization: False
 eigenvalue_shift_alpha: 0.0
